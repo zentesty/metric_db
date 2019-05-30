@@ -1,3 +1,5 @@
+from metrics.product import Product
+from metrics.metric import Metric
 from datetime import datetime
 import uuid
 import psycopg2
@@ -27,6 +29,7 @@ class TestRun:
         self.type = TypeEnum.DEV
         self.metrics = []
         self.products = []
+        self.__internal_id = -1
 
     @property
     def status(self):
@@ -37,12 +40,12 @@ class TestRun:
         self._status = value
 
     def add_metric(self, name, description, value, qualifier, dimensions):
-        newMetric = self.Metric(name, description, value, qualifier, dimensions)
+        newMetric = Metric(name=name, description=description, value=value, qualifier=qualifier, dimensions=dimensions)
         self.metrics.append(newMetric)
 
     def add_product(self, name, version, description = None):
-        newProd = self.Product(name, version, description)
-        self.metrics.append(newProd)
+        newProd = Product(name, version, description)
+        self.products.append(newProd)
 
     def commit(self):
         try:
@@ -51,19 +54,43 @@ class TestRun:
             cursor = connection.cursor()
 
             scTestRun = f"INSERT INTO test_run (build_number, scenario, status, ts_run) " \
-                f"VALUES('{str(self.build_number)}', '{str(self.scenario)}', {self.status.value}, '{str(datetime.now())}');"
+                f"VALUES('{str(self.build_number)}', '{str(self.scenario)}', {self.status.value}," \
+                f" '{str(datetime.now())}') RETURNING id_test;"
+
 
             # Print PostgreSQL Connection properties
             print(connection.get_dsn_parameters(), "\n")
-            # Print PostgreSQL version
+
+
+            # execute the query
             cursor.execute(scTestRun)
+
+            # Since the query ends with Return id the resultset expected in one row and one cell being the id
+            recordId = cursor.fetchone()
+
+            # if we did not receive any return the insert failed, should have normaly raised an exception
+            if recordId is None: raise Exception("RQTA_DB: Unable to create the test entity in the schema")
+
+            self.__internal_id = recordId[0]
+
+
+            # loop on all product to add them to the schema
+            for product in self.products:
+                prodId = product.commit(cursor)
+                # insert in the join table
+                scTestProd = f"INSERT INTO test_product (id_test, id_product) VALUES({self.__internal_id}, {prodId});"
+                cursor.execute(scTestProd)
+
+            for metric in self.metrics:
+                metricId = metric.commit(cursor)
+                scTestProd = f"INSERT INTO test_metric (id_test, id_metric) VALUES({self.__internal_id}, {metricId});"
+                cursor.execute(scTestProd)
+
+
+            # Completed
+            # at this time we will commit all the previously created transactions
+            # commit the transaction to the DBMS
             connection.commit()
-
-
-
-            # record = cursor.fetchone()
-            # print("You are connected to - ", record, "\n")
-
         except (Exception, psycopg2.Error) as error:
             print("Error while connecting to PostgreSQL", error)
         finally:
