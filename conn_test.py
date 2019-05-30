@@ -15,9 +15,10 @@ try:
 
     cursor.execute("SELECT * FROM tmp_account;")
     record = cursor.fetchone()
-    for obj in record:
-        print("Results - ", obj, "\n")
     print("Results - ", record,"\n")
+    record = cursor.fetchone()
+    print("Results - ", record,"\n")
+
 
 except (Exception, psycopg2.Error) as error :
     print ("Error while connecting to PostgreSQL", error)
