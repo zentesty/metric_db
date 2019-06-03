@@ -22,14 +22,17 @@ class TypeEnum(Enum):
 class TestRun:
     guid =str(uuid.uuid4())
 
-    def __init__(self, build_number, type = TypeEnum.DEV, scenario = None):
+
+    def __init__(self, build_number, type = TypeEnum.DEV, scenario = None, group='dev'):
         self.build_number = build_number
         self.scenario = scenario
         self._status = StatusEnum.READY
         self.type = TypeEnum.DEV
+        self.test_group = group
         self.metrics = []
         self.products = []
         self.__internal_id = -1
+
 
     @property
     def status(self):
@@ -53,9 +56,9 @@ class TestRun:
                                           host="127.0.0.1", port="5432", database="rqta_db")
             cursor = connection.cursor()
 
-            scTestRun = f"INSERT INTO test_run (build_number, scenario, status, ts_run) " \
+            scTestRun = f"INSERT INTO test_run (build_number, scenario, status, ts_run, test_group) " \
                 f"VALUES('{str(self.build_number)}', '{str(self.scenario)}', {self.status.value}," \
-                f" '{str(datetime.now())}') RETURNING id_test;"
+                f" '{str(datetime.now())}','{str(self.test_group)}') RETURNING id_test;"
 
 
             # Print PostgreSQL Connection properties

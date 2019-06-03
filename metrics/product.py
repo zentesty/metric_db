@@ -13,13 +13,19 @@ class Product:
 
 
     def commit(self, cursor):
-        scProd = f"INSERT INTO product (name, version, description) VALUES('{str(self.name)}', '{str(self.version)}', " \
-            f"'{str(self.description)}') RETURNING id_product;"
-
+        scProd = f"SELECT id_product FROM product p WHERE p.name='{str(self.name)}' AND p.version='{str(self.version)}';"
         cursor.execute(scProd)
-        # Since the query ends with Return id the resultset expected in one row and one cell being the id
         recordId = cursor.fetchone()
-        # if we did not receive any return the insert failed, should have normaly raised an exception
-        if recordId is None: raise Exception("RQTA_DB: Unable to create the test entity in the schema")
-        self.__internal_id = recordId[0]
+        if recordId is not None:
+            self.__internal_id = recordId[0]
+        else:
+            scProd = f"INSERT INTO product (name, version, description) VALUES('{str(self.name)}', '{str(self.version)}', " \
+                f"'{str(self.description)}') RETURNING id_product;"
+
+            cursor.execute(scProd)
+            # Since the query ends with Return id the resultset expected in one row and one cell being the id
+            recordId = cursor.fetchone()
+            # if we did not receive any return the insert failed, should have normaly raised an exception
+            if recordId is None: raise Exception("RQTA_DB: Unable to create the test entity in the schema")
+            self.__internal_id = recordId[0]
         return self.__internal_id
