@@ -1,6 +1,7 @@
+from core.metric_db_access import MetricDBAccess
 from metrics.product import Product
 from metrics.metric import Metric
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 import psycopg2
 import time
@@ -23,7 +24,17 @@ class TestRun:
     guid =str(uuid.uuid4())
 
 
-    def __init__(self, build_number, type = TypeEnum.DEV, scenario = None, group='dev'):
+    # TODO: Complete the auto creation
+    def createTestRunFromResultSet(resultSet):
+        ret_val = []
+        if not resultSet: ret_val
+        for result in resultSet:
+            res = TestRun()
+
+
+
+
+    def __init__(self, build_number, type = TypeEnum.DEV, scenario = None, group='dev', dt_stamp=datetime.now()):
         self.build_number = build_number
         self.scenario = scenario
         self._status = StatusEnum.READY
@@ -31,6 +42,7 @@ class TestRun:
         self.test_group = group
         self.metrics = []
         self.products = []
+        self.ts_run =  dt_stamp
         self.__internal_id = -1
 
 
@@ -50,15 +62,20 @@ class TestRun:
         newProd = Product(name, version, description)
         self.products.append(newProd)
 
+
     def commit(self):
         try:
-            connection = psycopg2.connect(user="mpr", password="robotiq",
-                                          host="127.0.0.1", port="5432", database="rqta_db")
+            connection = psycopg2.connect(user=MetricDBAccess.DB_USER,
+                                          password=MetricDBAccess.DB_PWD,
+                                          host=MetricDBAccess.DB_SERVER,
+                                          port=MetricDBAccess.DB_PORT,
+                                          database=MetricDBAccess.DB_NAME)
+            
             cursor = connection.cursor()
 
-            scTestRun = f"INSERT INTO test_run (build_number, scenario, status, ts_run, test_group) " \
+            scTestRun = f"INSERT INTO testrun (build_number, scenario, status, run_time, run_type) " \
                 f"VALUES('{str(self.build_number)}', '{str(self.scenario)}', {self.status.value}," \
-                f" '{str(datetime.now())}','{str(self.test_group)}') RETURNING id_test;"
+                f" '{str(self.ts_run)}','{str(self.test_group)}') RETURNING id_test;"
 
 
             # Print PostgreSQL Connection properties
@@ -81,12 +98,12 @@ class TestRun:
             for product in self.products:
                 prodId = product.commit(cursor)
                 # insert in the join table
-                scTestProd = f"INSERT INTO test_product (id_test, id_product) VALUES({self.__internal_id}, {prodId});"
+                scTestProd = f"INSERT INTO testrun_product (id_test, id_product) VALUES({self.__internal_id}, {prodId});"
                 cursor.execute(scTestProd)
 
             for metric in self.metrics:
                 metricId = metric.commit(cursor)
-                scTestProd = f"INSERT INTO test_metric (id_test, id_metric) VALUES({self.__internal_id}, {metricId});"
+                scTestProd = f"INSERT INTO testrun_metric (id_test, id_metric) VALUES({self.__internal_id}, {metricId});"
                 cursor.execute(scTestProd)
 
 

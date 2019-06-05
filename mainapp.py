@@ -1,11 +1,18 @@
 
+from datetime import datetime, timedelta
+
 from metrics.test_run import TestRun, TypeEnum
 import random
 
 
 if __name__ == '__main__':
     for idx in range(25):
-        test = TestRun(build_number=str(10000 + idx), type=TypeEnum.DEV, scenario="SCE001", group="QA")
+
+        type = ['TIMER', 'QA', 'TIMER', 'DEV', 'TIMER']
+
+        datets = datetime.now() - timedelta(days=(idx - 1))
+        test = TestRun(build_number=str(10000 + idx), type=TypeEnum.DEV, scenario="SCE00" + str(random.randint(1, 8)),
+                       group=type[random.randint(0, 4)], dt_stamp=datets)
 
         # Add tested products
         test.add_product(name="URCapA", version="1.0.0.1 alpha", description="Dev version with mem leak fix")
