@@ -5,17 +5,17 @@ import copy
 
 class MetricDBAccess:
 
-    # DB_SERVER = "127.0.0.1"
-    # DB_PORT = 5432
-    # DB_USER = "robotiq"
-    # DB_PWD = "qitobor"
-    # DB_NAME = "rqta_db_01"
-
-    DB_SERVER = "resultats-autotest.robotiq.rocks"
-    DB_PORT = 5433
+    DB_SERVER = "127.0.0.1"
+    DB_PORT = 5432
     DB_USER = "robotiq"
     DB_PWD = "qitobor"
     DB_NAME = "rqta_db_01"
+
+    # DB_SERVER = "resultats-autotest.robotiq.rocks"
+    # DB_PORT = 5433
+    # DB_USER = "robotiq"
+    # DB_PWD = "qitobor"
+    # DB_NAME = "rqta_db_01"
 
 
 
@@ -23,8 +23,11 @@ class MetricDBAccess:
     def execute_query(query):
         ret_val = []
         try:
-            connection = psycopg2.connect(user=MetricDBAccess.DB_USER, password="qitobor",
-                                          host="127.0.0.1", port="5432", database="rqta_db_01")
+            connection = psycopg2.connect(user=MetricDBAccess.DB_USER,
+                                          password=MetricDBAccess.DB_PWD,
+                                          host=MetricDBAccess.DB_SERVER,
+                                          port=MetricDBAccess.DB_PORT,
+                                          database=MetricDBAccess.DB_NAME)
             cursor = connection.cursor()
 
 

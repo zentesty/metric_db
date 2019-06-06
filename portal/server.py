@@ -105,9 +105,13 @@ def start_server():
     server.add_endpoint(endpoint='/',  endpoint_name='main', handler=srv_controller.get_main_page, methods=['GET'], Jsonfify=False)
     server.add_endpoint(endpoint='/testruns/get', endpoint_name='get_testruns', handler=data_controller.srv_get_testruns, methods=['GET'])
     server.add_endpoint(endpoint='/products/get', endpoint_name='get_prodcuts', handler=data_controller.srv_get_products, methods=['GET'])
+    server.add_endpoint(endpoint='/metrics/get', endpoint_name='get_metrics', handler=data_controller.srv_get_metrics, methods=['GET'])
+
+    server.add_endpoint(endpoint='/metrics/get/by_build_number', endpoint_name='get_metrics_by_build_number',
+                        handler=data_controller.srv_get_metric_by_Build_number, methods=['GET'])
+
 
     server.add_endpoint(endpoint='/other/main',  endpoint_name='other', handler=srv_controller.get_other_page, methods=['GET'], Jsonfify=False)
-
 
     server.add_endpoint(endpoint='/shutdown_server', endpoint_name='shutdown_server',
                         handler=srv_controller.srv_shutdown_server, methods=['POST'])

@@ -54,13 +54,16 @@ class TestRun:
     def status(self, value):
         self._status = value
 
-    def add_metric(self, name, description, value, qualifier, dimensions):
-        newMetric = Metric(name=name, description=description, value=value, qualifier=qualifier, dimensions=dimensions)
+    def add_metric(self, name, description, value, qualifier, dimensions, target, index=1):
+        newMetric = Metric(name=name, description=description, value=value,
+                           qualifier=qualifier, dimensions=dimensions, target=target, index=index)
         self.metrics.append(newMetric)
 
     def add_product(self, name, version, description = None):
         newProd = Product(name, version, description)
         self.products.append(newProd)
+
+
 
 
     def commit(self):
@@ -70,7 +73,7 @@ class TestRun:
                                           host=MetricDBAccess.DB_SERVER,
                                           port=MetricDBAccess.DB_PORT,
                                           database=MetricDBAccess.DB_NAME)
-            
+
             cursor = connection.cursor()
 
             scTestRun = f"INSERT INTO testrun (build_number, scenario, status, run_time, run_type) " \

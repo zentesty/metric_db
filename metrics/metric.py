@@ -3,22 +3,25 @@
 
 
 class Metric:
-    def __init__(self, name, value, qualifier = "", dimensions = {}, description = ""):
+    def __init__(self, name, value, target, qualifier = "", dimensions = {}, description = "", index=0):
         if name is None: raise Exception("Cannot create a Metric without a name")
         if value is None: raise Exception("Cannot create a Metric without a value")
 
         self.name = name
         self.value = value
+        self.target = target
         self.qualifier = qualifier
         self.dimensions = dimensions
         self.description = description
+        self.scalar_index = index
         self.__internal_id = -1
 
 
     def commit(self, cursor):
 
-        scMetrics = f"INSERT INTO metric (name, description, value, qualifier) " \
-            f"VALUES('{str(self.name)}', '{str(self.description)}', {self.value}, '{str(self.qualifier)}') " \
+        scMetrics = f"INSERT INTO metric (name, description, value, target, qualifier, scalar_index) " \
+            f"VALUES('{str(self.name)}', '{str(self.description)}', {self.value}, '{self.target}', " \
+            f"'{str(self.qualifier)}', {self.scalar_index}) " \
             f"RETURNING id_metric;"
 
         cursor.execute(scMetrics)
