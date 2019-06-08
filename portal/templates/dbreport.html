@@ -1,0 +1,290 @@
+<HTML>
+    <HEAD>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <!-- https://developers.google.com/chart/interactive/docs/gallery/linechart -->
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+        <style>
+            table {
+                border-collapse: collapse;
+            }
+            th, td {
+                border: 1px solid darkgreen;
+                padding: 10px;
+                text-align: left;
+            }
+            th {
+                background-color:darkgreen;
+                color:white;
+            }
+            tr:nth-child(even) {
+                background-color: #eee;
+            }
+            tr:nth-child(odd) {
+                background-color: #fff;
+            }
+
+
+            button {
+                background-color: darkgreen; /* Green */
+                border: none;
+                color: white;
+                padding: 8px 16px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 12px;
+            }
+
+
+            select {
+                width: 20%;
+                padding: 8px 10px;
+                border: none;
+                border-radius: 6px;
+                background-color: darkgreen;
+                color: white;
+                font-size: 14px;
+            }
+
+
+
+            input[type=submit]:hover {
+                background-color: #45a049;
+            }
+
+            div {
+                border-radius: 5px;
+                background-color: #f2f2f2;
+                padding: 20px;
+            }
+
+        </style>
+    </HEAD>
+    <BODY>
+            <H1>REPORT RESULTS</H1>
+            <H3>TEST RUNS</H3><br>
+
+            <a>From: </a>           <input id="start_date" value="2019.05.28"/>
+            <a>To: </a>             <input id="end_date" value="2019.06.03"/><br><br>
+            <a>Build number: </a>   <input id="build_number" /><br><br>
+            <a>Trigger: </a><br>
+
+            <select id="trigger">
+                <option value="ANY" selected>ANY</option>
+                <option value="QA">QA</option>
+                <option value="DEV">Developper</option>
+                <option value="TIMER">Jenkins Job</option>
+            </select><br><br>
+
+            <button type="button" onclick="getData('#excelDataTable', 'testruns')">Test runs</button><br><br>
+
+            <H3>PRODUCTS</H3><br><br>
+
+
+            <a>Name: </a>   <input id="prodname" />
+            <a>Version: </a>     <input id="prodversion" /><br><br>
+            <button type="button" onclick="getData('#excelDataTable', 'products')">Products</button><br><br>
+
+
+            <H3>METRICS </H3><br><br>
+
+
+            <a>Name: </a>        <input id="metricname" />
+            <a>Target: </a>     <input id="metrictarget" /><br><br>
+            <button type="button" onclick="getData('#excelDataTable', 'metrics')">Metrics</button><br>
+
+
+            <H3>METRICS BY BUILD NUMBER</H3><br><br>
+
+
+            <a>Build: </a>        <input id="metBuildNumber" value="10008"/>
+            <a>Target: </a>     <input id="metBuildTarget" value="java"/>
+            <a>Scenario: </a>     <input id="metScenario" value="Force_Copilot"/><br><br>
+            <a>Metric: </a>     <input id="metMetric" value="pcpu"/><br><br>
+            <button type="button" onclick="getData('#excelDataTable', 'metric_by_build_number')">Metrics By Build</button><br>
+
+            <br><br>
+            <table id="excelDataTable">
+            </table>
+
+            <div id="curve_chart" style="width: 900px; height: 500px"></div>
+
+
+    </BODY>
+    <SCRIPT>
+        var request = new XMLHttpRequest()
+        var testruns = null;
+
+        // Nested function to process received results
+        request.onload = function () {
+            var response = request.responseText;
+            console.log("ok"+ response);
+            var result = JSON.parse(response);
+            testruns = result.return;
+        }
+
+
+        function getDataFromServer(serverVerb){
+         // Open a new connection, using the GET request on the URL endpoint
+            request.open('GET', serverVerb, false);
+
+            // Send request
+            request.send();
+        }
+
+
+        function getData(anchor, type){
+            // var verb = "http://resultats-autotest.robotiq.rocks:5280";
+            var verb = "http://127.0.0.1:5280";
+
+            switch(type){
+                case "testruns":
+                    verb += "/testruns/get";
+
+                    verb += createRestParamList(["start_date", "end_date", "build_number", "status", "trigger"]);
+                    break;
+                case "products":
+                    verb += "/products/get";
+                    if (prodname = document.getElementById("prodname")){
+                        if(ret = prodname.value){
+                            verb += "?name=" + ret;
+                            if(prodversion = document.getElementById("prodversion")){
+                                if(ret = prodversion.value) {
+                                    verb += "&version=" + ret;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case "metrics":
+                    verb += "/metrics/get";
+                    if (metricname = document.getElementById("metricname")){
+                        if(ret = metricname.value){
+                            verb += "?name=" + ret;
+                            if(metrictarget = document.getElementById("metrictarget")){
+                                if(ret = metrictarget.value) {
+                                    verb += "&target=" + ret;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case "metric_by_build_number":
+
+                    verb += "/metrics/get/by_build_number";
+                    verb +=  "?" + "build_number=" + document.getElementById("metBuildNumber").value;
+                    verb +=  "&" + "target=" + document.getElementById("metBuildTarget").value;
+                    verb +=  "&" + "scenario=" + document.getElementById("metScenario").value;
+                    verb +=  "&" + "metric=" + document.getElementById("metMetric").value;
+
+                    break;
+                default:
+                    verb += "/testruns/get";
+
+            }
+
+
+            buildHtmlTable(anchor, verb);
+        }
+
+
+        function createRestParamList(listOfID){
+            var paramList = "";
+            var bFirst = true;
+            for (var i = 0; i < listOfID.length; i++) {
+                if(idElem = document.getElementById(listOfID[i])){
+                    if(val =  idElem.value){
+                        if(val != 'ANY'){
+                            paramList += bFirst?"?":"&";
+                            bFirst = false;
+                            paramList += listOfID[i] + "=" + val;
+                        }
+                    }
+                }
+            }
+            return paramList;
+        }
+
+        // Builds the HTML Table out of myList.
+        function buildHtmlTable(selector, verb) {
+            //var testruns = getData_testruns();
+            getDataFromServer(verb);
+
+            if(!testruns) return;
+
+            $(selector).empty();
+
+            var columns = addAllColumnHeaders(testruns, selector);
+
+            for (var i = 0; i < testruns.length; i++) {
+                var row$ = $('<tr/>');
+                for (var colIndex = 0; colIndex < columns.length; colIndex++) {
+                    var cellValue = testruns[i][columns[colIndex]];
+                    if (cellValue == null) cellValue = "";
+                    row$.append($('<td/>').html(cellValue));
+                }
+                $(selector).append(row$);
+            }
+        }
+
+        // Adds a header row to the table and returns the set of columns.
+        // Need to do union of keys from all records as some records may not contain
+        // all records.
+        function addAllColumnHeaders(myList, selector) {
+            var columnSet = [];
+            var headerTr$ = $('<tr/>');
+
+            for (var i = 0; i < myList.length; i++) {
+                var rowHash = myList[i];
+                for (var key in rowHash) {
+                    if ($.inArray(key, columnSet) == -1) {
+                        columnSet.push(key);
+                        headerTr$.append($('<th/>').html(key));
+                    }
+                }
+            }
+            $(selector).append(headerTr$);
+            return columnSet;
+        }
+
+
+
+        // GRAPH SECTION
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+            ['Index','java', 'driverSensorUR','URControl' , 'drivergripper', 'xmlrpcserver'],
+            ['1', 101, 1.9, 7.6, 1.1, 1],
+            ['2', 96.2, 1.8, 7.5, 1.1, 0.7],
+            ['3', 90.2, 1.7, 7.4, 1.1, 0.6],
+            ['4', 85, 1.7, 7.4, 1.1, 0.5],
+            ['5', 80.3, 1.7, 7.3, 1.1, 0.4],
+            ['6', 76.2, 1.7, 7.3, 1.1, 0.4],
+            ['7', 72.5, 1.6, 7.2, 1.1, 0.4],
+            ['8', 69.2, 1.6, 7.2, 1.1, 0.3],
+            ['9', 66.1, 1.6, 7.2, 1.1, 0.3],
+            ['10', 63.3, 1.6, 7.1, 1.1, 0.3],
+            ['11', 61, 1.6, 7.1, 1.1, 0.3],
+            ['12', 58.7, 1.6, 7.1, 1.1, 0.3]
+        ]);
+
+
+        var options = {
+          title: 'Resources Performance - CPU',
+          curveType: 'function',
+          legend: { position: 'right' }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart.draw(data, options);
+        }
+      </SCRIPT>
+
+
+</HTML>
+
+
