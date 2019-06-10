@@ -5,6 +5,8 @@
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 
         <style>
+            /* Table */
+
             table {
                 border-collapse: collapse;
             }
@@ -24,7 +26,7 @@
                 background-color: #fff;
             }
 
-
+            /* Button  */
             button {
                 background-color: darkgreen; /* Green */
                 border: none;
@@ -36,6 +38,7 @@
                 font-size: 12px;
             }
 
+            /* Drop downs */
 
             select {
                 width: 20%;
@@ -48,6 +51,7 @@
             }
 
 
+            /* Input text */
 
             input[type=submit]:hover {
                 background-color: #45a049;
@@ -56,12 +60,90 @@
             div {
                 border-radius: 5px;
                 background-color: #f2f2f2;
-                padding: 20px;
+                padding: 10px;
             }
 
+
+            .a {
+                padding: 5px;
+                text-align: center;
+            }
+
+            /* TOP MENU */
+            body {margin:0;}
+
+            .navbar {
+                overflow: hidden;
+                background-color: #333;
+                position: fixed;
+                top: 0;
+                width: 100%;
+            }
+
+            .navbar a {
+                float: left;
+                display: block;
+                color: #f2f2f2;
+                text-align: center;
+                padding: 8px 8px;
+                text-decoration: none;
+                font-size: 20px;
+            }
+
+            .navbar a:hover {
+                background: green;
+                color: white;
+            }
+
+            .navbar input {
+                float: left;
+                display: block;
+                color: darkgreen;
+                text-align: center;
+                vertical-align: center;
+                padding: 6px 6px;
+                text-decoration: none;
+                font-size: 16px;
+            }
+
+            .navbar button{
+                float: left;
+                display: block;
+                color: white;
+                text-align: center;
+                vertical-align: center;
+                margin-left: 12px;
+                text-decoration: none;
+                font-size: 16px;
+            }
+
+
+            .main {
+                padding: 16px;
+                margin-top: 30px;
+                height: 1500px;
+            }
         </style>
     </HEAD>
-    <BODY>
+    <BODY onload="init()">
+
+
+        <!-- MENU -->
+        <div class="navbar">
+<!--            <a>From: </a>           <input id="start_date2" value="2019.05.28"/>-->
+<!--            <a>To: </a>             <input id="to_date2" value="2019.06.08"/>-->
+<!--            <a>Date: </a>             <input id="ReportDate" value="" />-->
+
+            <a>Date: </a>
+            <input type="date" id="filter_date" name="trip-start" value="2019-06-05" min="2021-01-01" max="2018-12-31">
+
+            <button type="button" onclick="getData('#excelDataTable', 'testruns')">Test runs</button>
+
+
+        </div>
+
+        <!-- MAIN PAGE -->
+        <div class="main">
             <H1>REPORT RESULTS</H1>
             <H3>TEST RUNS</H3><br>
 
@@ -103,6 +185,7 @@
             <a>Scenario: </a>     <input id="metScenario" value="Force_Copilot"/><br><br>
             <a>Metric: </a>     <input id="metMetric" value="pcpu"/><br><br>
             <button type="button" onclick="getData('#excelDataTable', 'metric_by_build_number')">Metrics By Build</button><br>
+            <button type="button" onclick="getGraphData()">Metrics By Build Graph</button><br>
 
             <br><br>
             <table id="excelDataTable">
@@ -110,11 +193,13 @@
 
             <div id="curve_chart" style="width: 900px; height: 500px"></div>
 
+        </div>
 
     </BODY>
     <SCRIPT>
         var request = new XMLHttpRequest()
         var testruns = null;
+
 
         // Nested function to process received results
         request.onload = function () {
@@ -124,6 +209,16 @@
             testruns = result.return;
         }
 
+        function init()
+        {
+            var currentDate = new Date();
+            var day = currentDate.getDate();
+            var month = currentDate.getMonth() + 1;
+            var year = currentDate.getFullYear();
+            // document.getElementById("filter_date").value = year + "-" + month + "-" + day;
+
+        }
+
 
         function getDataFromServer(serverVerb){
          // Open a new connection, using the GET request on the URL endpoint
@@ -131,6 +226,19 @@
 
             // Send request
             request.send();
+        }
+
+        function getGraphData(){
+            verb += "get_metrics_by_build_number_graph";
+            verb +=  "?" + "build_number=" + document.getElementById("metBuildNumber").value;
+            verb +=  "&" + "target=" + document.getElementById("metBuildTarget").value;
+            verb +=  "&" + "scenario=" + document.getElementById("metScenario").value;
+            verb +=  "&" + "metric=" + document.getElementById("metMetric").value;
+
+            getDataFromServer(verb);
+
+
+
         }
 
 

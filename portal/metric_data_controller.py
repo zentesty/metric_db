@@ -129,6 +129,31 @@ class MetricDataController:
         return ret_value
 
 
+    def srv_get_metric_by_Build_number_graph(self):
+
+        query = """
+        SELECT m.id_metric, m.scalar_index, m.name, m.target, m.value, t.run_type from metric m
+            Join testrun_metric tm on m.id_metric = tm.id_metric
+            Join testrun t on tm.id_test = t.id_test
+            WHERE t.build_number='<<BUILD_NUMBER>>' and t.scenario='<<SCENARIO>>'
+                  and m.target='<<TARGET>>' and m.name='<<METRIC>>'
+            ORDER BY m.scalar_index;
+        """
+        ret_value = {'status': 'success', 'return': ''}
+
+        target = request.args.get("target")
+        build_number = request.args.get("build_number")
+        scenario = request.args.get("scenario")
+        metric = request.args.get("metric")
+
+        query = query.replace('<<BUILD_NUMBER>>', build_number)
+        query = query.replace('<<SCENARIO>>', scenario)
+        query = query.replace('<<TARGET>>', target)
+        query = query.replace('<<METRIC>>', metric)
+
+        rset = MetricDBAccess.execute_query(query)
+        ret_value['return'] = rset
+        return ret_value
 
 
 
