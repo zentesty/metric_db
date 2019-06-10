@@ -128,21 +128,37 @@
     <BODY onload="init()">
 
 
+        <!-- **********-->
         <!-- MENU -->
+        <!--
+            query = query.replace('<<BUILD_NUMBER>>', build_number)
+            query = query.replace('<<SCENARIO>>', scenario)
+            query = query.replace('<<TARGET>>', target)
+            query = query.replace('<<METRIC>>', metric)
+        -->
+
+        <!-- **********-->
         <div class="navbar">
-<!--            <a>From: </a>           <input id="start_date2" value="2019.05.28"/>-->
-<!--            <a>To: </a>             <input id="to_date2" value="2019.06.08"/>-->
-<!--            <a>Date: </a>             <input id="ReportDate" value="" />-->
-
             <a>Date: </a>
-            <input type="date" id="filter_date" name="trip-start" value="2019-06-05" min="2021-01-01" max="2018-12-31">
+            <input type="date" id="filter_date" name="contextDate" value="2019-06-05">
 
-            <button type="button" onclick="getData('#excelDataTable', 'testruns')">Test runs</button>
+            <a>Build Number: </a>
+            <input id="filer_build_number" style="width:5%">
+
+            <a>Process: </a>
+            <input id="filer_target_process" style="width:7%">
+
+            <a>Metric: </a>
+            <input id="filer_metric" style="width:7%">
+
+
+            <button type="button" onclick="getData('#excelDataTable', 'testruns')">Generate</button>
 
 
         </div>
-
+        <!-- **********-->
         <!-- MAIN PAGE -->
+        <!-- **********-->
         <div class="main">
             <H1>REPORT RESULTS</H1>
             <H3>TEST RUNS</H3><br>
