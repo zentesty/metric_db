@@ -87,13 +87,13 @@
                 text-align: center;
                 padding: 8px 8px;
                 text-decoration: none;
-                font-size: 20px;
+                font-size: 16px;
             }
 
-            .navbar a:hover {
-                background: green;
-                color: white;
-            }
+            /*.navbar a:hover {*/
+            /*    background: green;*/
+            /*    color: white;*/
+            /*}*/
 
             .navbar input {
                 float: left;
@@ -103,7 +103,7 @@
                 vertical-align: center;
                 padding: 6px 6px;
                 text-decoration: none;
-                font-size: 16px;
+                font-size: 14px;
             }
 
             .navbar button{
@@ -112,9 +112,25 @@
                 color: white;
                 text-align: center;
                 vertical-align: center;
-                margin-left: 12px;
+                margin-left: 6px;
                 text-decoration: none;
-                font-size: 16px;
+                font-size: 14px;
+            }
+
+
+            .navbar select{
+                float: left;
+                display: block;
+                color: white;
+                text-align: center;
+                vertical-align: center;
+                margin-left: 6px;
+                text-decoration: none;
+                font-size: 14px;
+                width: 15%;
+                min-width: 120px;
+                margin-top: 1px;
+                margin-bottom: 1px;
             }
 
 
@@ -139,20 +155,17 @@
 
         <!-- **********-->
         <div class="navbar">
-            <a>Date: </a>
-            <input type="date" id="filter_date" name="contextDate" value="2019-06-05">
+            <a>Build # (date): </a>
 
-            <a>Build Number: </a>
-            <input id="filer_build_number" style="width:5%">
+            <select id="filter_date_dd"></select>
 
             <a>Process: </a>
-            <input id="filer_target_process" style="width:7%">
+            <select id="filter_process_dd"></select>
 
             <a>Metric: </a>
-            <input id="filer_metric" style="width:7%">
+            <select id="filter_metric_dd"></select>
 
-
-            <button type="button" onclick="getData('#excelDataTable', 'testruns')">Generate</button>
+            <button type="button" onclick="getData('#excelDataTable', 'rest_results')">Generate</button>
 
 
         </div>
@@ -175,7 +188,7 @@
                 <option value="TIMER">Jenkins Job</option>
             </select><br><br>
 
-            <button type="button" onclick="getData('#excelDataTable', 'testruns')">Test runs</button><br><br>
+            <button type="button" onclick="getData('#excelDataTable', 'rest_results')">Test runs</button><br><br>
 
             <H3>PRODUCTS</H3><br><br>
 
@@ -200,7 +213,7 @@
             <a>Target: </a>     <input id="metBuildTarget" value="java"/>
             <a>Scenario: </a>     <input id="metScenario" value="Force_Copilot"/><br><br>
             <a>Metric: </a>     <input id="metMetric" value="pcpu"/><br><br>
-            <button type="button" onclick="getData('#excelDataTable', 'metric_by_build_number')">Metrics By Build</button><br>
+            <button type="button" onclick="getData('#excelDataTable', 'metrics_raw')">Metrics By Build</button><br>
             <button type="button" onclick="getGraphData()">Metrics By Build Graph</button><br>
 
             <br><br>
@@ -213,36 +226,77 @@
 
     </BODY>
     <SCRIPT>
-        var request = new XMLHttpRequest()
-        var testruns = null;
+        var rest_request = new XMLHttpRequest()
+        var rest_results = null;
 
 
-        // Nested function to process received results
-        request.onload = function () {
-            var response = request.responseText;
-            console.log("ok"+ response);
-            var result = JSON.parse(response);
-            testruns = result.return;
-        }
-
-        function init()
-        {
-            var currentDate = new Date();
-            var day = currentDate.getDate();
-            var month = currentDate.getMonth() + 1;
-            var year = currentDate.getFullYear();
-            // document.getElementById("filter_date").value = year + "-" + month + "-" + day;
-
-        }
 
 
         function getDataFromServer(serverVerb){
          // Open a new connection, using the GET request on the URL endpoint
-            request.open('GET', serverVerb, false);
+            rest_request.open('GET', serverVerb, false);
 
             // Send request
-            request.send();
+            rest_request.send();
         }
+
+
+        // Nested function to process received results
+        rest_request.onload = function () {
+            var response = rest_request.responseText;
+            console.log("ok"+ response);
+            var result = JSON.parse(response);
+            rest_results = result.return;
+        }
+
+        function init()
+        {
+            init_build_number_list();
+            init_metric_list();
+            //init_process_list();
+        }
+
+        function init_build_number_list(){
+            var filter_dd_build = document.getElementById("filter_date_dd");
+
+            var verb = getRestURL("testruns_get_all_dates");
+            getDataFromServer(verb);
+
+            //Create array of options to be added
+            var array = rest_results;
+            //Create and append the options
+            for (var i = 0; i < array.length; i++) {
+                var option = document.createElement("option");
+                option.value = array[i].build_number;
+                option.text = array[i].build_number +  " (" +  array[i].run_time + ")";
+                filter_dd_build.appendChild(option);
+            }
+        }
+
+        function init_metric_list(){
+            var filter_dd_metric = document.getElementById("filter_metric_dd");
+
+            // Get selected build number
+            var filter_dd_build = document.getElementById("filter_date_dd");
+            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value
+
+            var verb = getRestURL("metrics_by_build_number");
+            verb = verb.replace("<<BUILD_NUMBER>>", build_number);
+            getDataFromServer(verb);
+
+            filter_dd_metric.innerHTML = "";
+
+            var array = rest_results;
+            //Create and append the options
+            for (var i = 0; i < array.length; i++) {
+                var option = document.createElement("option");
+                option.value = array[i].metric_name;
+                option.text = array[i].metric_name;
+                filter_dd_metric.appendChild(option);
+            }
+
+        }
+
 
         function getGraphData(){
             verb += "get_metrics_by_build_number_graph";
@@ -252,19 +306,20 @@
             verb +=  "&" + "metric=" + document.getElementById("metMetric").value;
 
             getDataFromServer(verb);
-
-
-
         }
 
 
         function getData(anchor, type){
-            // var verb = "http://resultats-autotest.robotiq.rocks:5280";
+            var verb = getRestURL(type);
+            buildHtmlTable(anchor, verb);
+        }
+
+        function getRestURL(type){
             var verb = "http://127.0.0.1:5280";
 
             switch(type){
-                case "testruns":
-                    verb += "/testruns/get";
+                case "rest_results":
+                    verb += "/rest_results/get";
 
                     verb += createRestParamList(["start_date", "end_date", "build_number", "status", "trigger"]);
                     break;
@@ -294,7 +349,7 @@
                         }
                     }
                     break;
-                case "metric_by_build_number":
+                case "metrics_raw":
 
                     verb += "/metrics/get/by_build_number";
                     verb +=  "?" + "build_number=" + document.getElementById("metBuildNumber").value;
@@ -303,13 +358,21 @@
                     verb +=  "&" + "metric=" + document.getElementById("metMetric").value;
 
                     break;
-                default:
-                    verb += "/testruns/get";
+                case "testruns_get_all_dates":
+                    verb += "/testruns/getAllDates";
+                    verb += "?" + "sort=" + "ASC"; // ["DESC" | "ASC"]
+                    break;
+                case "metrics_by_build_number":
+                    verb += "/metrics/get/by_build_number";
+                    verb += "?" + "build_number=<<BUILD_NUMBER>>";
+                    break;
 
+
+                default:
+                    verb += "/rest_results/get";
             }
 
-
-            buildHtmlTable(anchor, verb);
+            return verb;
         }
 
 
@@ -332,19 +395,19 @@
 
         // Builds the HTML Table out of myList.
         function buildHtmlTable(selector, verb) {
-            //var testruns = getData_testruns();
+            //var rest_results = getData_rest_results();
             getDataFromServer(verb);
 
-            if(!testruns) return;
+            if(!rest_results) return;
 
             $(selector).empty();
 
-            var columns = addAllColumnHeaders(testruns, selector);
+            var columns = addAllColumnHeaders(rest_results, selector);
 
-            for (var i = 0; i < testruns.length; i++) {
+            for (var i = 0; i < rest_results.length; i++) {
                 var row$ = $('<tr/>');
                 for (var colIndex = 0; colIndex < columns.length; colIndex++) {
-                    var cellValue = testruns[i][columns[colIndex]];
+                    var cellValue = rest_results[i][columns[colIndex]];
                     if (cellValue == null) cellValue = "";
                     row$.append($('<td/>').html(cellValue));
                 }

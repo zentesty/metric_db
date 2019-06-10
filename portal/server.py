@@ -2,7 +2,9 @@ from distutils.util import strtobool
 from flask import Flask, Response, jsonify, request, render_template
 from flask_swagger_ui import get_swaggerui_blueprint
 
-from portal.metric_data_controller import MetricDataController
+from portal.metrics_data_controller import MetricsDataController
+from portal.testruns_service_controller import TestRunsDataController
+from portal.products_service_controller import ProductsDataController
 
 import argparse
 import requests
@@ -99,20 +101,33 @@ class BridgeController:
 def start_server():
     server = ServiceAppWrapper('RQTA_PORTAL_SRV')
     srv_controller = BridgeController()
-    data_controller = MetricDataController()
+    testruns_controller = TestRunsDataController()
+    metrics_controller = MetricsDataController()
+    products_controller = ProductsDataController()
 
-    # Create the REST endpoints of the exposed services
+    ##
+    ## Endpoint:        MAIN
     server.add_endpoint(endpoint='/',  endpoint_name='main', handler=srv_controller.get_main_page, methods=['GET'], Jsonfify=False)
-    server.add_endpoint(endpoint='/testruns/get', endpoint_name='get_testruns', handler=data_controller.srv_get_testruns, methods=['GET'])
-    server.add_endpoint(endpoint='/products/get', endpoint_name='get_prodcuts', handler=data_controller.srv_get_products, methods=['GET'])
-    server.add_endpoint(endpoint='/metrics/get', endpoint_name='get_metrics', handler=data_controller.srv_get_metrics, methods=['GET'])
+
+    ##
+    ## Endpoint:        TESTRUNS
+    server.add_endpoint(endpoint='/testruns/get', endpoint_name='get_testruns', handler=testruns_controller.srv_get_testruns, methods=['GET'])
+    server.add_endpoint(endpoint='/testruns/getAllDates', endpoint_name='get_testruns_all_dates',
+                        handler=testruns_controller.srv_get_testruns_all_dates, methods=['GET'])
 
 
+    ##
+    ## Endpoint:        PRODUCTS
+    server.add_endpoint(endpoint='/products/get', endpoint_name='get_prodcuts', handler=products_controller.srv_get_products, methods=['GET'])
+
+    ##
+    ## Endpoint:        METRICS
+    server.add_endpoint(endpoint='/metrics/get', endpoint_name='get_metrics', handler=metrics_controller.srv_get_metrics, methods=['GET'])
     server.add_endpoint(endpoint='/metrics/get/by_build_number', endpoint_name='get_metrics_by_build_number',
-                        handler=data_controller.srv_get_metric_by_Build_number, methods=['GET'])
-
+                        handler=metrics_controller.srv_get_metrics_by_build_number, methods=['GET'])
     server.add_endpoint(endpoint='/metrics/get/by_build_number_graph', endpoint_name='get_metrics_by_build_number_graph',
-                        handler=data_controller.srv_get_metric_by_Build_number_graph, methods=['GET'])
+                        handler=metrics_controller.srv_get_metric_by_Build_number_graph, methods=['GET'])
+
 
 
 
