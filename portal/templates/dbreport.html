@@ -115,6 +115,8 @@
                 margin-left: 6px;
                 text-decoration: none;
                 font-size: 14px;
+                margin-top: 2px;
+                margin-left: 2%;
             }
 
 
@@ -139,88 +141,71 @@
                 margin-top: 30px;
                 height: 1500px;
             }
+
+
+            /* ---  */
+            .tableGraph {
+                padding: 0px;
+                padding-top: 0px;
+            }
+
         </style>
     </HEAD>
     <BODY onload="init()">
 
 
-        <!-- **********-->
-        <!-- MENU -->
-        <!--
-            query = query.replace('<<BUILD_NUMBER>>', build_number)
-            query = query.replace('<<SCENARIO>>', scenario)
-            query = query.replace('<<TARGET>>', target)
-            query = query.replace('<<METRIC>>', metric)
-        -->
-
-        <!-- **********-->
-        <div class="navbar">
+        <!-- *****************************************************************-->
+        <!-- **********************     MENU    ******************************-->
+        <!-- *****************************************************************-->
+        <div class="navbar" style="z-index: 1000;">
             <a>Build # (date): </a>
+            <select id="filter_date_dd" onchange="updateMetricAndTarget()"></select>
 
-            <select id="filter_date_dd"></select>
-
-            <a>Process: </a>
-            <select id="filter_process_dd"></select>
+            <a>Scenario: </a>
+            <select id="filter_scenario_dd"></select>
 
             <a>Metric: </a>
             <select id="filter_metric_dd"></select>
+
+            <a>Target: </a>
+            <select id="filter_target_dd"></select>
 
             <button type="button" onclick="getData('#excelDataTable', 'rest_results')">Generate</button>
 
 
         </div>
-        <!-- **********-->
-        <!-- MAIN PAGE -->
-        <!-- **********-->
+        <!-- *****************************************************************-->
+        <!-- *****************      MAIN PAGE        *************************-->
+        <!-- *****************************************************************-->
         <div class="main">
             <H1>REPORT RESULTS</H1>
-            <H3>TEST RUNS</H3><br>
-
-            <a>From: </a>           <input id="start_date" value="2019.05.28"/>
-            <a>To: </a>             <input id="end_date" value="2019.06.03"/><br><br>
-            <a>Build number: </a>   <input id="build_number" /><br><br>
-            <a>Trigger: </a><br>
-
-            <select id="trigger">
-                <option value="ANY" selected>ANY</option>
-                <option value="QA">QA</option>
-                <option value="DEV">Developper</option>
-                <option value="TIMER">Jenkins Job</option>
-            </select><br><br>
-
-            <button type="button" onclick="getData('#excelDataTable', 'rest_results')">Test runs</button><br><br>
-
-            <H3>PRODUCTS</H3><br><br>
 
 
-            <a>Name: </a>   <input id="prodname" />
-            <a>Version: </a>     <input id="prodversion" /><br><br>
-            <button type="button" onclick="getData('#excelDataTable', 'products')">Products</button><br><br>
 
+            <table id="excelDataTable"></table>
 
-            <H3>METRICS </H3><br><br>
-
-
-            <a>Name: </a>        <input id="metricname" />
-            <a>Target: </a>     <input id="metrictarget" /><br><br>
-            <button type="button" onclick="getData('#excelDataTable', 'metrics')">Metrics</button><br>
-
-
-            <H3>METRICS BY BUILD NUMBER</H3><br><br>
-
-
-            <a>Build: </a>        <input id="metBuildNumber" value="10008"/>
-            <a>Target: </a>     <input id="metBuildTarget" value="java"/>
-            <a>Scenario: </a>     <input id="metScenario" value="Force_Copilot"/><br><br>
-            <a>Metric: </a>     <input id="metMetric" value="pcpu"/><br><br>
-            <button type="button" onclick="getData('#excelDataTable', 'metrics_raw')">Metrics By Build</button><br>
-            <button type="button" onclick="getGraphData()">Metrics By Build Graph</button><br>
-
-            <br><br>
-            <table id="excelDataTable">
+            <table class="columns" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                    <th>Graph A</th>
+                    <th>Graph B</th>
+                </tr>
+                <tr>
+                    <td class="tableGraph"><div id="curve_chart" style="border: 1px solid #ccc"></div></td>
+                    <td class="tableGraph"><div id="curve_chart2" style="border: 1px solid #ccc"></div></td>
+                </tr>
             </table>
 
-            <div id="curve_chart" style="width: 900px; height: 500px"></div>
+                <table class="columns" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                    <th>Graph A</th>
+                    <th>Graph B</th>
+                </tr>
+                <tr>
+                    <td class="tableGraph"><div id="curve_chartB" style="border: 1px solid #ccc"></div></td>
+                    <td class="tableGraph"><div id="curve_chartB2" style="border: 1px solid #ccc"></div></td>
+                </tr>
+            </table>
+
 
         </div>
 
@@ -252,10 +237,28 @@
         function init()
         {
             init_build_number_list();
-            init_metric_list();
-            //init_process_list();
+            updateMetricAndTarget();
         }
 
+        /////////////////////////////////////////////////////////////////
+        //
+        // Update the scenario, metric and taget based on the selected
+        // build number
+        //
+        function updateMetricAndTarget(){
+            //init_scenario_list();
+            init_filter_list(document.getElementById("filter_scenario_dd"), "scenario_by_build_number", "scenario");
+            //init_metric_list();
+            init_filter_list(document.getElementById("filter_metric_dd"), "metrics_by_build_number", "metric_name");
+            //init_target_list();
+            init_filter_list(document.getElementById("filter_target_dd"), "target_by_build_number", "target");
+        }
+
+        /////////////////////////////////////////////////////////////////
+        //
+        // Initialize the list of Build number (and date) from the
+        // database.
+        //
         function init_build_number_list(){
             var filter_dd_build = document.getElementById("filter_date_dd");
 
@@ -265,6 +268,10 @@
             //Create array of options to be added
             var array = rest_results;
             //Create and append the options
+            if(array.length > 0){
+                array
+            }
+
             for (var i = 0; i < array.length; i++) {
                 var option = document.createElement("option");
                 option.value = array[i].build_number;
@@ -273,6 +280,40 @@
             }
         }
 
+
+        /////////////////////////////////////////////////////////////////
+        //
+        // Initialize the list of scenarios  based on the selected build
+        // number.
+        //
+        function init_scenario_list(){
+            var filter_dd_scenario = document.getElementById("filter_scenario_dd");
+
+            // Get selected build number
+            var filter_dd_build = document.getElementById("filter_date_dd");
+            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value
+
+            var verb = getRestURL("scenario_by_build_number");
+            verb = verb.replace("<<BUILD_NUMBER>>", build_number);
+            getDataFromServer(verb);
+
+            filter_dd_scenario.innerHTML = "";
+
+            var array = rest_results;
+            //Create and append the options
+            for (var i = 0; i < array.length; i++) {
+                var option = document.createElement("option");
+                option.value = "target_" + i;
+                option.text = array[i].scenario;
+                filter_dd_scenario.appendChild(option);
+            }
+        }
+
+        /////////////////////////////////////////////////////////////////
+        //
+        // Initialize the list of metrics  based on the selected build
+        // number.
+        //
         function init_metric_list(){
             var filter_dd_metric = document.getElementById("filter_metric_dd");
 
@@ -298,6 +339,81 @@
         }
 
 
+        /////////////////////////////////////////////////////////////////
+        //
+        // Initialize the list of target based on the selected build
+        // number.
+        //
+        function init_target_list(){
+            var filter_dd_target = document.getElementById("filter_target_dd");
+
+            // Get selected build number
+            var filter_dd_build = document.getElementById("filter_date_dd");
+            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value
+
+            var verb = getRestURL("target_by_build_number");
+            verb = verb.replace("<<BUILD_NUMBER>>", build_number);
+            getDataFromServer(verb);
+
+            filter_target_dd.innerHTML = "";
+
+            var array = rest_results;
+            //Create and append the options
+            for (var i = 0; i < array.length; i++) {
+                var option = document.createElement("option");
+                option.value = "target_" + i;
+                option.text = array[i].target;
+                filter_dd_target.appendChild(option);
+            }
+        }
+
+        /////////////////////////////////////////////////////////////////
+        //
+        // Initialize the list of filters based on the selected build
+        // number. This includes Scenario, Metric and Target
+        //
+        function init_filter_list(filter_dd, restId, value){
+
+
+            // Get selected build number
+            var filter_dd_build = document.getElementById("filter_date_dd");
+            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value
+
+            var verb = getRestURL(restId);
+            verb = verb.replace("<<BUILD_NUMBER>>", build_number);
+            getDataFromServer(verb);
+
+            filter_dd.innerHTML = "";
+
+            if(rest_results.length > 0){
+                var option = document.createElement("option");
+                option.value = "ANY";
+                option.text = "ANY";
+                filter_dd.appendChild(option);
+            }
+
+            //Create and append the options
+            for (var i = 0; i < rest_results.length; i++) {
+                var option = document.createElement("option");
+                option.value = rest_results[i][value] + i;
+                option.text = rest_results[i][value];
+                filter_dd.appendChild(option);
+            }
+        }
+
+
+
+
+
+
+        function generateAllGraphs(){
+
+
+        }
+
+
+
+
         function getGraphData(){
             verb += "get_metrics_by_build_number_graph";
             verb +=  "?" + "build_number=" + document.getElementById("metBuildNumber").value;
@@ -309,14 +425,24 @@
         }
 
 
+        /***
+         *
+         *  Obtain data and fill a table with that data
+         *
+         * */
         function getData(anchor, type){
             var verb = getRestURL(type);
             buildHtmlTable(anchor, verb);
-        }
 
+
+        }
+        /***
+         *
+         *  Create the needed URL to call a REST web service
+         *
+         * */
         function getRestURL(type){
             var verb = "http://127.0.0.1:5280";
-
             switch(type){
                 case "rest_results":
                     verb += "/rest_results/get";
@@ -363,18 +489,22 @@
                     verb += "?" + "sort=" + "ASC"; // ["DESC" | "ASC"]
                     break;
                 case "metrics_by_build_number":
-                    verb += "/metrics/get/by_build_number";
+                    verb += "/metrics/get/metric_by_build_number";
                     verb += "?" + "build_number=<<BUILD_NUMBER>>";
                     break;
-
-
+                case "target_by_build_number":
+                    verb += "/metrics/get/target_by_build_number";
+                    verb += "?" + "build_number=<<BUILD_NUMBER>>";
+                    break;
+                case "scenario_by_build_number":
+                    verb += "/testruns/scenario_by_build_number";
+                    verb += "?" + "build_number=<<BUILD_NUMBER>>";
+                    break;
                 default:
                     verb += "/rest_results/get";
             }
-
             return verb;
         }
-
 
         function createRestParamList(listOfID){
             var paramList = "";
@@ -393,7 +523,11 @@
             return paramList;
         }
 
-        // Builds the HTML Table out of myList.
+        /***
+         *
+         *  Create a table with the passed data tuple
+         *
+         * */
         function buildHtmlTable(selector, verb) {
             //var rest_results = getData_rest_results();
             getDataFromServer(verb);
@@ -435,8 +569,9 @@
             return columnSet;
         }
 
-
-
+        //
+        //  GOOGLE CHARTS
+        //
         // GRAPH SECTION
         google.charts.load('current', {'packages':['corechart']});
         google.charts.setOnLoadCallback(drawChart);
@@ -460,14 +595,24 @@
 
 
         var options = {
-          title: 'Resources Performance - CPU',
-          curveType: 'function',
-          legend: { position: 'right' }
+            title: 'Resources Performance - CPU',
+            curveType: 'function',
+            legend: { position: 'bottom' },
+            width:600,
+            height:400,
+            chartArea: {'width': '80%', 'height': '86%'},
         };
 
+
         var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+        var chart2 = new google.visualization.LineChart(document.getElementById('curve_chart2'));
+        var chartB = new google.visualization.LineChart(document.getElementById('curve_chartB'));
+        var chartB2 = new google.visualization.LineChart(document.getElementById('curve_chartB2'));
 
         chart.draw(data, options);
+        chart2.draw(data, options);
+        chartB.draw(data, options);
+        chartB2.draw(data, options);
         }
       </SCRIPT>
 

@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
 
             datets = datetime.now() - timedelta(days=(idx - 1))
-            test = TestRun(build_number=str(10000 + idx), type=TypeEnum.DEV, scenario=scenario[scenarioIdx],
+            test = TestRun(build_number=str(10000 + (50 - idx)), type=TypeEnum.DEV, scenario=scenario[scenarioIdx],
                            group=type[random.randint(0, 4)], dt_stamp=datets)
 
             # Add tested products
@@ -55,21 +55,27 @@ if __name__ == '__main__':
                                 target='drivergripper', index=metricIdx,
                                 dimensions={'type':'average_all'})
 
-                #xmlrpcserver
-                test.add_metric(name="pcpu", description="", value=(random.random() * 100),qualifier="%",
-                                target='xmlrpcserver', index=metricIdx,
-                                dimensions={'type':'average_all'})
-                test.add_metric(name="pmem", description="", value=random.random() * 100, qualifier="MB",
-                                target='xmlrpcserver', index=metricIdx,
-                                dimensions={'type':'average_all'})
+                if not random.randint(1, 10) % 3 == 0:
+                    #xmlrpcserver
+                    test.add_metric(name="pcpu", description="", value=(random.random() * 100),qualifier="%",
+                                    target='xmlrpcserver', index=metricIdx,
+                                    dimensions={'type':'average_all'})
+                    test.add_metric(name="pmem", description="", value=random.random() * 100, qualifier="MB",
+                                    target='xmlrpcserver', index=metricIdx,
+                                    dimensions={'type':'average_all'})
 
-                #visionserver
-                test.add_metric(name="pcpu", description="", value=(random.random() * 100),qualifier="%",
-                                target='visionserver', index=metricIdx,
-                                dimensions={'type':'average_all'})
-                test.add_metric(name="pmem", description="", value=random.random() * 100, qualifier="MB",
-                                target='visionserver', index=metricIdx,
-                                dimensions={'type':'average_all'})
 
+                    #visionserver
+                    test.add_metric(name="pcpu", description="", value=(random.random() * 100),qualifier="%",
+                                    target='visionserver', index=metricIdx,
+                                    dimensions={'type':'average_all'})
+                    test.add_metric(name="pmem", description="", value=random.random() * 100, qualifier="MB",
+                                    target='visionserver', index=metricIdx,
+                                    dimensions={'type':'average_all'})
+                else:
+                    #visionserver
+                    test.add_metric(name="pcpu", description="", value=(random.random() * 100),qualifier="%",
+                                    target='xolitono', index=metricIdx,
+                                    dimensions={'type':'average_all'})
             # Commit to the database
             test.commit()

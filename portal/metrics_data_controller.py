@@ -74,6 +74,62 @@ class MetricsDataController:
         return ret_value
 
 
+    ###########################################################################
+    ##      Get Metrics By Build Number
+    ##      METRICS
+    ##
+    def srv_get_metrics_by_build_number(self):
+        ret_value = {'status': 'success', 'return': ''}
+
+        build_number = request.args.get("build_number")
+
+        if not build_number:
+            ret_value['status'] = 'failure'
+            return ret_value
+
+        query = """
+            SELECT DISTINCT name AS metric_name FROM metric
+            JOIN testrun_metric on metric.id_metric = testrun_metric.id_metric
+            JOIN testrun t on testrun_metric.id_test = t.id_test
+            WHERE t.build_number = '<<BUILD_NUMBER>>';        
+        """
+        query = query.replace('<<BUILD_NUMBER>>', build_number)
+
+        rset = MetricDBAccess.execute_query(query)
+        ret_value['return'] = rset
+        return ret_value
+
+
+
+    ###########################################################################
+    ##
+    ##      METRICS
+    ##
+    def srv_get_targets_by_build_number(self):
+        ret_value = {'status': 'success', 'return': ''}
+
+        build_number = request.args.get("build_number")
+
+        if not build_number:
+            ret_value['status'] = 'failure'
+            return ret_value
+
+        query = """
+            SELECT DISTINCT target FROM metric
+            JOIN testrun_metric on metric.id_metric = testrun_metric.id_metric
+            JOIN testrun t on testrun_metric.id_test = t.id_test
+            WHERE t.build_number = '<<BUILD_NUMBER>>'        
+            ORDER BY target;             
+        """
+        query = query.replace('<<BUILD_NUMBER>>', build_number)
+
+        rset = MetricDBAccess.execute_query(query)
+        ret_value['return'] = rset
+        return ret_value
+
+
+
+
 
     def testdateformat(date_text):
         try:

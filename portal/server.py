@@ -114,6 +114,8 @@ def start_server():
     server.add_endpoint(endpoint='/testruns/get', endpoint_name='get_testruns', handler=testruns_controller.srv_get_testruns, methods=['GET'])
     server.add_endpoint(endpoint='/testruns/getAllDates', endpoint_name='get_testruns_all_dates',
                         handler=testruns_controller.srv_get_testruns_all_dates, methods=['GET'])
+    server.add_endpoint(endpoint='/testruns/scenario_by_build_number', endpoint_name='get_scenario_by_build_number',
+                        handler=testruns_controller.srv_get_scenario_by_build_number, methods=['GET'])
 
 
     ##
@@ -123,8 +125,11 @@ def start_server():
     ##
     ## Endpoint:        METRICS
     server.add_endpoint(endpoint='/metrics/get', endpoint_name='get_metrics', handler=metrics_controller.srv_get_metrics, methods=['GET'])
-    server.add_endpoint(endpoint='/metrics/get/by_build_number', endpoint_name='get_metrics_by_build_number',
+    server.add_endpoint(endpoint='/metrics/get/metric_by_build_number', endpoint_name='get_metrics_by_build_number',
                         handler=metrics_controller.srv_get_metrics_by_build_number, methods=['GET'])
+    server.add_endpoint(endpoint='/metrics/get/target_by_build_number', endpoint_name='get_target_by_build_number',
+                        handler=metrics_controller.srv_get_targets_by_build_number, methods=['GET'])
+
     server.add_endpoint(endpoint='/metrics/get/by_build_number_graph', endpoint_name='get_metrics_by_build_number_graph',
                         handler=metrics_controller.srv_get_metric_by_Build_number_graph, methods=['GET'])
 
