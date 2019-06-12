@@ -170,10 +170,10 @@
             <a>Target: </a>
             <select id="filter_target_dd"></select>
 
-            <button type="button" onclick="getData('#excelDataTable', 'rest_results')">Generate</button>
+<!--            <button type="button" onclick="getData('#excelDataTable', 'rest_results')">Generate</button>-->
 
 
-            <button type="button" onclick="generateAllGraphs()">Graph Test</button>
+            <button type="button" onclick="generateAllGraphs()">Generate</button>
 
         </div>
         <!-- *****************************************************************-->
@@ -187,39 +187,35 @@
             <table id="excelDataTable"></table>
 
             <table id="tableGraph" class="columns" border="0" cellspacing="0" cellpadding="0">
-<!--                <tr>-->
-<!--                    <th>Graph A</th>-->
-<!--                    <th>Graph B</th>-->
-<!--                </tr>-->
-<!--                <tr>-->
-<!--                    <td class="tableGraph"><div id="curve_chart1" style="border: 1px solid #ccc"></div></td>-->
-<!--                    <td class="tableGraph"><div id="curve_chart2" style="border: 1px solid #ccc"></div></td>-->
-<!--                </tr>-->
             </table>
 
 
 
 
-<!--            <table class="columns" border="0" cellspacing="0" cellpadding="0">-->
-<!--                <tr>-->
-<!--                    <th>Graph A</th>-->
-<!--                    <th>Graph B</th>-->
-<!--                </tr>-->
-<!--                <tr>-->
-<!--                    <td class="tableGraph"><div id="curve_chart3" style="border: 1px solid #ccc"></div></td>-->
-<!--                    <td class="tableGraph"><div id="curve_chart4" style="border: 1px solid #ccc"></div></td>-->
-<!--                </tr>-->
-<!--            </table>-->
-
-
         </div>
 
     </BODY>
+
+    <!--Load the AJAX API-->
+    <SCRIPT type="text/javascript" src="https://www.google.com/jsapi"></SCRIPT>
+<!--    <SCRIPT type="text/javascript">-->
+<!--        // Load the Visualization API library and the piechart library.-->
+<!--       google.load('visualization', '1.0', {'packages':['corechart']});-->
+<!--        //google.setOnLoadCallback(drawChart);-->
+<!--    </SCRIPT>-->
+
     <SCRIPT>
+         google.load('visualization', '1.0', {'packages':['corechart']});
+
         var rest_request = new XMLHttpRequest()
         var rest_results = null;
 
-
+        function init()
+        {
+            init_build_number_list();
+            updateMetricAndTarget();
+            generateAllGraphs();
+        }
 
 
         function getDataFromServer(serverVerb){
@@ -234,16 +230,11 @@
         // Nested function to process received results
         rest_request.onload = function () {
             var response = rest_request.responseText;
-            console.log("ok"+ response);
+            //console.log("ok"+ response);
             var result = JSON.parse(response);
             rest_results = result.return;
         }
 
-        function init()
-        {
-            init_build_number_list();
-            updateMetricAndTarget();
-        }
 
         /////////////////////////////////////////////////////////////////
         //
@@ -319,8 +310,22 @@
         function generateAllGraphs(){
             // Get selected build number
             var filter_dd_build = document.getElementById("filter_date_dd");
-            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value
-            var scenarios = document.getElementById("filter_scenario_dd").options;
+            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value;
+
+
+            // Get the selected dropdowns
+            var dd_scenario = document.getElementById("filter_scenario_dd");
+            var dd_metric = document.getElementById("filter_metric_dd");
+
+            var scenarios = dd_scenario.options;
+            var metrics = dd_metric.options;
+
+            var sel_scenario = .options[ddscenario.selectedIndex].innerText;
+            var sel_metric = document.getElementById("filter_scenario_dd").options[ddscenario.selectedIndex].innerText;
+
+
+            qtyMetrics = metrics.length - 1;
+            qtyScenarios = scenarios.length - 1;
 
             scenarioA = 'gripper';
 
@@ -329,57 +334,55 @@
             var table = document.getElementById("tableGraph");
             table.innerText = "";
 
-            for(var scenario in scenarios){
-                if (scenario.outerText != "ANY"){
-                    if (idxGraph >= availableGraph){
-                        // Find a <table> element with id="myTable":
-                        var row = table.insertRow(Math.floor(idxGraph/graphPerLine));
-                        row.className = "tableGraph";
+            //Create the graph containers
+            while(availableGraph <  (qtyScenarios * qtyMetrics)){
+                // Find a <table> element with id="myTable":
+                var row = table.insertRow(Math.floor(availableGraph/graphPerLine));
+                row.className = "tableGraph";
+                row.id = "rowNbr" + Math.floor(availableGraph/graphPerLine);
 
-                        for(var i = 0; i < graphPerLine; i++){
-                            // Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
-                            var cell = row.insertCell(i);
-                            cell.id = "genGraph" + availableGraph++;
+                for(var i = 0; i < graphPerLine; i++) {
+                    // Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
+                    var cell = row.insertCell(i);
+                    cell.id = "cell" + availableGraph++;
+                    cell.style = "text-align: center";
+                    // Create the cell graph div to be added to the cell
+                    newDiv = document.createElement("div");
+                    newDiv.id = "genGraph" + availableGraph;
+                    newDiv.style = "border: 1px; solid #ccc";
+                    // Link to download the data
+                    newLink = document.createElement("a");
+                    newLink.id = "dwDataLink" + availableGraph;
+                    // newLink.href = "javascript:generateTheDownloadLink('" + build_number + "','" + scenarioName + "');";
+                    newLink.style = "position: center";
+                    newLink.innerText = "Download data";
+                    newLink.style = "font-size: small";
 
-
-                            
-                            // Add some text to the new cells:
-                            cell.innerHTML = "NEW CELL1";
-                        }
-                    }
-                    idxGraph++;
+                    cell.appendChild(newDiv);
+                    cell.appendChild(newLink);
                 }
             }
-
-
-            /*\
-<!--                <tr>-->
-<!--                    <th>Graph A</th>-->
-<!--                    <th>Graph B</th>-->
-<!--                </tr>-->
-<!--                <tr>-->
-<!--                    <td class="tableGraph"><div id="curve_chart1" style="border: 1px solid #ccc"></div></td>-->
-<!--                    <td class="tableGraph"><div id="curve_chart2" style="border: 1px solid #ccc"></div></td>-->
-<!--                </tr>-->
-             */
-
-            for(var scenario in scenarios){
-                if (scenario.outerHTML != "ANY"){
-                    google.charts.load('current', {'packages':['corechart']});
+            // Draw the graph
+            var idxGraph = 1;
+            for (var it = 0; it < scenarios.length; it ++){
+                var scenarioName = scenarios[it].outerText;
+                if (scenarioName != "ANY"){
 
                     var verb = getRestURL("metric_by_build_number_scenario");
                     verb = verb.replace("<<BUILD_NUMBER>>", build_number);
-                    verb = verb.replace("<<SCENARIO>>", scenario.outerHTML);
+                    verb = verb.replace("<<SCENARIO>>", scenarioName);
                     getDataFromServer(verb);
 
 
-                    var idxGraph = 1;
+
                     for(var key in rest_results){
-                        console.log(key);
+                        // console.log(key);
+
+                        google.charts.load('current', {'packages':['corechart']});
                         var data = google.visualization.arrayToDataTable(rest_results[key]);
 
                         var options = {
-                            title: 'Resources Performance - CPU',
+                            title: "Build " + build_number + " - Scenario: " + scenarioName + " - Metric: " + key,
                             curveType: 'function',
                             legend: { position: 'bottom' },
                             width:600,
@@ -387,18 +390,70 @@
                             chartArea: {'width': '80%', 'height': '86%'},
                         };
 
-                        var chart = new google.visualization.LineChart(document.getElementById('curve_chart' + idxGraph));
+                        var dwDatalink = document.getElementById("dwDataLink" + idxGraph);
+                        dwDatalink.href = "javascript:generateTheDownloadLink('" + build_number +"', " +
+                            "'" +  scenarioName + "', '" + key + "');";
+
+                        var chart = new google.visualization.LineChart(document.getElementById('genGraph' + idxGraph));
                         chart.draw(data, options);
                         idxGraph++;
                     }
 
                 }
             }
-
-
-
         }
 
+
+        /***
+         *  this function process the link to download the data associated with graphs
+         *
+         *
+         * */
+        function generateTheDownloadLink(build_number, scenario, metric){
+            var verb = getRestURL("metric_by_build_number_scenario");
+            verb = verb.replace("<<BUILD_NUMBER>>", build_number);
+            verb = verb.replace("<<SCENARIO>>", scenario);
+            verb += "&metric=" + metric;
+            getDataFromServer(verb);
+
+            var x = rest_results;
+
+            var ret_text = "";
+            for(key in rest_results) {
+                var ret_table = rest_results[key];
+                for (var row = 0; row < ret_table.length; row++) {
+                    var ret_row = ret_table[row];
+                    for (var col = 0; col < ret_row.length; col++) {
+                        ret_text += ret_row[col] + ", ";
+                    }
+                    ret_text = ret_text.substring(0, ret_text.lastIndexOf(', ')) + "\r\n" + ret_text.substring(ret_text.lastIndexOf(',') + 1);
+                }
+            }
+
+            var mysce = scenario.replace("[|]", "_")
+            download("Export_" + build_number + "_" + mysce + "_" + metric + ".csv", ret_text);
+        }
+
+
+
+        function download(filename, text) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        }
+
+
+        function sleep(delay) {
+            var start = new Date().getTime();
+            while (new Date().getTime() < start + delay);
+        }
 
         /***
          *

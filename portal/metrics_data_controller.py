@@ -203,8 +203,8 @@ class MetricsDataController:
         ret_value = {'status': 'success', 'return': ''}
 
         build_number = request.args.get("build_number")
-        metric = request.args.get("metric")
         scenario = request.args.get("scenario")
+        metric = request.args.get("metric")
 
         final_return = {}
 
@@ -220,7 +220,8 @@ class MetricsDataController:
             print("Scenario missing")
             return ret_value
 
-        rset_metrics = self._get_metrics_per_build_number_scenario(build_number, scenario)
+
+        rset_metrics = self._get_metrics_per_build_number_scenario(build_number, scenario, metric)
 
         if len(rset_metrics) == 0: return ""
 
@@ -277,16 +278,19 @@ class MetricsDataController:
 
 
 
-    def _get_metrics_per_build_number_scenario(self, build_number, scenario):
+    def _get_metrics_per_build_number_scenario(self, build_number, scenario, metric= None):
         query = """
             SELECT DISTINCT name FROM metric
             JOIN testrun_metric tm ON metric.id_metric = tm.id_metric
             JOIN testrun t ON tm.id_test = t.id_test
-            WHERE t.build_number='<<BUILD_NUMBER>>' and t.scenario='<<SCENARIO>>';
+            WHERE t.build_number='<<BUILD_NUMBER>>' and t.scenario='<<SCENARIO>>'
         """
 
         query = query.replace('<<BUILD_NUMBER>>', build_number)
         query = query.replace('<<SCENARIO>>', scenario)
+        if metric: query += f" and metric.name='{metric}';"
+        else: query += ";"
+
         rset = MetricDBAccess.execute_query(query)
         return rset
 
