@@ -133,8 +133,8 @@ def start_server():
     server.add_endpoint(endpoint='/metrics/get/by_build_number_graph', endpoint_name='get_metrics_by_build_number_graph',
                         handler=metrics_controller.srv_get_metric_by_Build_number_graph, methods=['GET'])
 
-
-
+    server.add_endpoint(endpoint='/metrics/get/data_graph', endpoint_name='get_metrics_by_build_number_scenario_graph',
+                        handler=metrics_controller.srv_get_graph_data, methods=['GET'])
 
 
     server.add_endpoint(endpoint='/other/main',  endpoint_name='other', handler=srv_controller.get_other_page, methods=['GET'], Jsonfify=False)

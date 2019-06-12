@@ -173,6 +173,8 @@
             <button type="button" onclick="getData('#excelDataTable', 'rest_results')">Generate</button>
 
 
+            <button type="button" onclick="generateAllGraphs()">Graph Test</button>
+
         </div>
         <!-- *****************************************************************-->
         <!-- *****************      MAIN PAGE        *************************-->
@@ -184,27 +186,30 @@
 
             <table id="excelDataTable"></table>
 
-            <table class="columns" border="0" cellspacing="0" cellpadding="0">
-                <tr>
-                    <th>Graph A</th>
-                    <th>Graph B</th>
-                </tr>
-                <tr>
-                    <td class="tableGraph"><div id="curve_chart" style="border: 1px solid #ccc"></div></td>
-                    <td class="tableGraph"><div id="curve_chart2" style="border: 1px solid #ccc"></div></td>
-                </tr>
+            <table id="tableGraph" class="columns" border="0" cellspacing="0" cellpadding="0">
+<!--                <tr>-->
+<!--                    <th>Graph A</th>-->
+<!--                    <th>Graph B</th>-->
+<!--                </tr>-->
+<!--                <tr>-->
+<!--                    <td class="tableGraph"><div id="curve_chart1" style="border: 1px solid #ccc"></div></td>-->
+<!--                    <td class="tableGraph"><div id="curve_chart2" style="border: 1px solid #ccc"></div></td>-->
+<!--                </tr>-->
             </table>
 
-                <table class="columns" border="0" cellspacing="0" cellpadding="0">
-                <tr>
-                    <th>Graph A</th>
-                    <th>Graph B</th>
-                </tr>
-                <tr>
-                    <td class="tableGraph"><div id="curve_chartB" style="border: 1px solid #ccc"></div></td>
-                    <td class="tableGraph"><div id="curve_chartB2" style="border: 1px solid #ccc"></div></td>
-                </tr>
-            </table>
+
+
+
+<!--            <table class="columns" border="0" cellspacing="0" cellpadding="0">-->
+<!--                <tr>-->
+<!--                    <th>Graph A</th>-->
+<!--                    <th>Graph B</th>-->
+<!--                </tr>-->
+<!--                <tr>-->
+<!--                    <td class="tableGraph"><div id="curve_chart3" style="border: 1px solid #ccc"></div></td>-->
+<!--                    <td class="tableGraph"><div id="curve_chart4" style="border: 1px solid #ccc"></div></td>-->
+<!--                </tr>-->
+<!--            </table>-->
 
 
         </div>
@@ -246,11 +251,8 @@
         // build number
         //
         function updateMetricAndTarget(){
-            //init_scenario_list();
             init_filter_list(document.getElementById("filter_scenario_dd"), "scenario_by_build_number", "scenario");
-            //init_metric_list();
             init_filter_list(document.getElementById("filter_metric_dd"), "metrics_by_build_number", "metric_name");
-            //init_target_list();
             init_filter_list(document.getElementById("filter_target_dd"), "target_by_build_number", "target");
         }
 
@@ -265,105 +267,11 @@
             var verb = getRestURL("testruns_get_all_dates");
             getDataFromServer(verb);
 
-            //Create array of options to be added
-            var array = rest_results;
-            //Create and append the options
-            if(array.length > 0){
-                array
-            }
-
-            for (var i = 0; i < array.length; i++) {
+            for (var i = 0; i < rest_results.length; i++) {
                 var option = document.createElement("option");
-                option.value = array[i].build_number;
-                option.text = array[i].build_number +  " (" +  array[i].run_time + ")";
+                option.value = rest_results[i].build_number;
+                option.text = rest_results[i].build_number +  " (" +  rest_results[i].run_time + ")";
                 filter_dd_build.appendChild(option);
-            }
-        }
-
-
-        /////////////////////////////////////////////////////////////////
-        //
-        // Initialize the list of scenarios  based on the selected build
-        // number.
-        //
-        function init_scenario_list(){
-            var filter_dd_scenario = document.getElementById("filter_scenario_dd");
-
-            // Get selected build number
-            var filter_dd_build = document.getElementById("filter_date_dd");
-            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value
-
-            var verb = getRestURL("scenario_by_build_number");
-            verb = verb.replace("<<BUILD_NUMBER>>", build_number);
-            getDataFromServer(verb);
-
-            filter_dd_scenario.innerHTML = "";
-
-            var array = rest_results;
-            //Create and append the options
-            for (var i = 0; i < array.length; i++) {
-                var option = document.createElement("option");
-                option.value = "target_" + i;
-                option.text = array[i].scenario;
-                filter_dd_scenario.appendChild(option);
-            }
-        }
-
-        /////////////////////////////////////////////////////////////////
-        //
-        // Initialize the list of metrics  based on the selected build
-        // number.
-        //
-        function init_metric_list(){
-            var filter_dd_metric = document.getElementById("filter_metric_dd");
-
-            // Get selected build number
-            var filter_dd_build = document.getElementById("filter_date_dd");
-            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value
-
-            var verb = getRestURL("metrics_by_build_number");
-            verb = verb.replace("<<BUILD_NUMBER>>", build_number);
-            getDataFromServer(verb);
-
-            filter_dd_metric.innerHTML = "";
-
-            var array = rest_results;
-            //Create and append the options
-            for (var i = 0; i < array.length; i++) {
-                var option = document.createElement("option");
-                option.value = array[i].metric_name;
-                option.text = array[i].metric_name;
-                filter_dd_metric.appendChild(option);
-            }
-
-        }
-
-
-        /////////////////////////////////////////////////////////////////
-        //
-        // Initialize the list of target based on the selected build
-        // number.
-        //
-        function init_target_list(){
-            var filter_dd_target = document.getElementById("filter_target_dd");
-
-            // Get selected build number
-            var filter_dd_build = document.getElementById("filter_date_dd");
-            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value
-
-            var verb = getRestURL("target_by_build_number");
-            verb = verb.replace("<<BUILD_NUMBER>>", build_number);
-            getDataFromServer(verb);
-
-            filter_target_dd.innerHTML = "";
-
-            var array = rest_results;
-            //Create and append the options
-            for (var i = 0; i < array.length; i++) {
-                var option = document.createElement("option");
-                option.value = "target_" + i;
-                option.text = array[i].target;
-                filter_dd_target.appendChild(option);
             }
         }
 
@@ -403,25 +311,92 @@
 
 
 
-
-
-
+        /////////////////////////////////////////////////////////////////
+        //
+        // Generate the grpah based on the filters
+        //
+        //
         function generateAllGraphs(){
+            // Get selected build number
+            var filter_dd_build = document.getElementById("filter_date_dd");
+            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value
+            var scenarios = document.getElementById("filter_scenario_dd").options;
+
+            scenarioA = 'gripper';
+
+            var graphPerLine=2;
+            var idxGraph = 0, availableGraph = 0;
+            var table = document.getElementById("tableGraph");
+            table.innerText = "";
+
+            for(var scenario in scenarios){
+                if (scenario.outerText != "ANY"){
+                    if (idxGraph >= availableGraph){
+                        // Find a <table> element with id="myTable":
+                        var row = table.insertRow(Math.floor(idxGraph/graphPerLine));
+                        row.className = "tableGraph";
+
+                        for(var i = 0; i < graphPerLine; i++){
+                            // Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
+                            var cell = row.insertCell(i);
+                            cell.id = "genGraph" + availableGraph++;
 
 
-        }
+                            
+                            // Add some text to the new cells:
+                            cell.innerHTML = "NEW CELL1";
+                        }
+                    }
+                    idxGraph++;
+                }
+            }
+
+
+            /*\
+<!--                <tr>-->
+<!--                    <th>Graph A</th>-->
+<!--                    <th>Graph B</th>-->
+<!--                </tr>-->
+<!--                <tr>-->
+<!--                    <td class="tableGraph"><div id="curve_chart1" style="border: 1px solid #ccc"></div></td>-->
+<!--                    <td class="tableGraph"><div id="curve_chart2" style="border: 1px solid #ccc"></div></td>-->
+<!--                </tr>-->
+             */
+
+            for(var scenario in scenarios){
+                if (scenario.outerHTML != "ANY"){
+                    google.charts.load('current', {'packages':['corechart']});
+
+                    var verb = getRestURL("metric_by_build_number_scenario");
+                    verb = verb.replace("<<BUILD_NUMBER>>", build_number);
+                    verb = verb.replace("<<SCENARIO>>", scenario.outerHTML);
+                    getDataFromServer(verb);
+
+
+                    var idxGraph = 1;
+                    for(var key in rest_results){
+                        console.log(key);
+                        var data = google.visualization.arrayToDataTable(rest_results[key]);
+
+                        var options = {
+                            title: 'Resources Performance - CPU',
+                            curveType: 'function',
+                            legend: { position: 'bottom' },
+                            width:600,
+                            height:400,
+                            chartArea: {'width': '80%', 'height': '86%'},
+                        };
+
+                        var chart = new google.visualization.LineChart(document.getElementById('curve_chart' + idxGraph));
+                        chart.draw(data, options);
+                        idxGraph++;
+                    }
+
+                }
+            }
 
 
 
-
-        function getGraphData(){
-            verb += "get_metrics_by_build_number_graph";
-            verb +=  "?" + "build_number=" + document.getElementById("metBuildNumber").value;
-            verb +=  "&" + "target=" + document.getElementById("metBuildTarget").value;
-            verb +=  "&" + "scenario=" + document.getElementById("metScenario").value;
-            verb +=  "&" + "metric=" + document.getElementById("metMetric").value;
-
-            getDataFromServer(verb);
         }
 
 
@@ -500,6 +475,10 @@
                     verb += "/testruns/scenario_by_build_number";
                     verb += "?" + "build_number=<<BUILD_NUMBER>>";
                     break;
+                case "metric_by_build_number_scenario":
+                    verb += "/metrics/get/data_graph";
+                    verb += "?" + "build_number=<<BUILD_NUMBER>>&scenario=<<SCENARIO>>";
+                    break;
                 default:
                     verb += "/rest_results/get";
             }
@@ -569,54 +548,7 @@
             return columnSet;
         }
 
-        //
-        //  GOOGLE CHARTS
-        //
-        // GRAPH SECTION
-        google.charts.load('current', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(drawChart);
-
-        function drawChart() {
-        var data = google.visualization.arrayToDataTable([
-            ['Index','java', 'driverSensorUR','URControl' , 'drivergripper', 'xmlrpcserver'],
-            ['1', 101, 1.9, 7.6, 1.1, 1],
-            ['2', 96.2, 1.8, 7.5, 1.1, 0.7],
-            ['3', 90.2, 1.7, 7.4, 1.1, 0.6],
-            ['4', 85, 1.7, 7.4, 1.1, 0.5],
-            ['5', 80.3, 1.7, 7.3, 1.1, 0.4],
-            ['6', 76.2, 1.7, 7.3, 1.1, 0.4],
-            ['7', 72.5, 1.6, 7.2, 1.1, 0.4],
-            ['8', 69.2, 1.6, 7.2, 1.1, 0.3],
-            ['9', 66.1, 1.6, 7.2, 1.1, 0.3],
-            ['10', 63.3, 1.6, 7.1, 1.1, 0.3],
-            ['11', 61, 1.6, 7.1, 1.1, 0.3],
-            ['12', 58.7, 1.6, 7.1, 1.1, 0.3]
-        ]);
-
-
-        var options = {
-            title: 'Resources Performance - CPU',
-            curveType: 'function',
-            legend: { position: 'bottom' },
-            width:600,
-            height:400,
-            chartArea: {'width': '80%', 'height': '86%'},
-        };
-
-
-        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
-        var chart2 = new google.visualization.LineChart(document.getElementById('curve_chart2'));
-        var chartB = new google.visualization.LineChart(document.getElementById('curve_chartB'));
-        var chartB2 = new google.visualization.LineChart(document.getElementById('curve_chartB2'));
-
-        chart.draw(data, options);
-        chart2.draw(data, options);
-        chartB.draw(data, options);
-        chartB2.draw(data, options);
-        }
-      </SCRIPT>
-
-
+    </SCRIPT>
 </HTML>
 
 
