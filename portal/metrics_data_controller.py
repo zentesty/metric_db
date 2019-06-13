@@ -205,6 +205,7 @@ class MetricsDataController:
         build_number = request.args.get("build_number")
         scenario = request.args.get("scenario")
         metric = request.args.get("metric")
+        target = request.args.get("target")
 
         final_return = {}
 
@@ -230,12 +231,16 @@ class MetricsDataController:
                 SELECT m.target, m.scalar_index, m.value FROM metric m
                 JOIN testrun_metric tm ON m.id_metric = tm.id_metric
                 JOIN testrun t ON tm.id_test = t.id_test
-                WHERE t.build_number='<<BUILD_NUMBER>>' and t.scenario='<<SCENARIO>>' and m.name='<<METRIC_NAME>>'
+                WHERE t.build_number='<<BUILD_NUMBER>>' and t.scenario='<<SCENARIO>>' and m.name='<<METRIC_NAME>>' [[TARGET]]
                 ORDER BY m.target, m.scalar_index;          
             """
             query = query.replace('<<BUILD_NUMBER>>', build_number)
             query = query.replace('<<SCENARIO>>', scenario)
             query = query.replace('<<METRIC_NAME>>', metric_entry.get('name'))
+            if target:
+                query = query.replace('[[TARGET]]', f"and m.target='{target}'")
+            else:
+                query = query.replace('[[TARGET]]', "")
 
             rset = MetricDBAccess.execute_query(query)
 
@@ -243,6 +248,7 @@ class MetricsDataController:
 
 
             # Process all metrics for the combinaison of build_number / scenario
+            # Crating a table from the long list
             return_header = ["Index"]
             list_return = []
 
@@ -253,7 +259,6 @@ class MetricsDataController:
             # Add the header as first
             list_return.append(return_header)
             for result_entry in rset:
-
                 if not result_entry.get('target') == return_header[len(return_header) - 1]:
                     return_header.append(result_entry.get('target'))
                     idx = 1
@@ -274,10 +279,10 @@ class MetricsDataController:
 
 
 
-
-
-
-
+    ######
+    ###
+    ###   WORK IN PROGRESS
+    ###
     def _get_metrics_per_build_number_scenario(self, build_number, scenario, metric= None):
         query = """
             SELECT DISTINCT name FROM metric
@@ -293,6 +298,24 @@ class MetricsDataController:
 
         rset = MetricDBAccess.execute_query(query)
         return rset
+
+
+
+
+    def get_metric_statistic_per_period(self):
+        ret_value = {'status': 'success', 'return': ''}
+
+        start_bn = request.args.get("start_build_number")
+        end_bn = request.args.get("end_build_number")
+        last_n_build = request.args.get("last")
+        metric = request.args.get("metric")
+
+
+
+
+
+
+
 
 
 

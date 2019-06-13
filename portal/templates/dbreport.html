@@ -162,18 +162,18 @@
             <select id="filter_date_dd" onchange="updateMetricAndTarget()"></select>
 
             <a>Scenario: </a>
-            <select id="filter_scenario_dd"></select>
+            <select id="filter_scenario_dd" onchange="generateAllGraphs()"></select>
 
             <a>Metric: </a>
-            <select id="filter_metric_dd"></select>
+            <select id="filter_metric_dd" onchange="generateAllGraphs()"></select>
 
             <a>Target: </a>
-            <select id="filter_target_dd"></select>
+            <select id="filter_target_dd" onchange="generateAllGraphs()"></select>
 
 <!--            <button type="button" onclick="getData('#excelDataTable', 'rest_results')">Generate</button>-->
 
 
-            <button type="button" onclick="generateAllGraphs()">Generate</button>
+<!--            <button type="button" onclick="generateAllGraphs()">Generate</button>-->
 
         </div>
         <!-- *****************************************************************-->
@@ -193,7 +193,7 @@
 
 
         </div>
-
+        <br><br><br><br>
     </BODY>
 
     <!--Load the AJAX API-->
@@ -204,406 +204,489 @@
 <!--        //google.setOnLoadCallback(drawChart);-->
 <!--    </SCRIPT>-->
 
-    <SCRIPT>
-         google.load('visualization', '1.0', {'packages':['corechart']});
-
-        var rest_request = new XMLHttpRequest()
-        var rest_results = null;
-
-        function init()
-        {
-            init_build_number_list();
-            updateMetricAndTarget();
-            generateAllGraphs();
-        }
-
-
-        function getDataFromServer(serverVerb){
-         // Open a new connection, using the GET request on the URL endpoint
-            rest_request.open('GET', serverVerb, false);
-
-            // Send request
-            rest_request.send();
-        }
-
-
-        // Nested function to process received results
-        rest_request.onload = function () {
-            var response = rest_request.responseText;
-            //console.log("ok"+ response);
-            var result = JSON.parse(response);
-            rest_results = result.return;
-        }
-
-
-        /////////////////////////////////////////////////////////////////
-        //
-        // Update the scenario, metric and taget based on the selected
-        // build number
-        //
-        function updateMetricAndTarget(){
-            init_filter_list(document.getElementById("filter_scenario_dd"), "scenario_by_build_number", "scenario");
-            init_filter_list(document.getElementById("filter_metric_dd"), "metrics_by_build_number", "metric_name");
-            init_filter_list(document.getElementById("filter_target_dd"), "target_by_build_number", "target");
-        }
-
-        /////////////////////////////////////////////////////////////////
-        //
-        // Initialize the list of Build number (and date) from the
-        // database.
-        //
-        function init_build_number_list(){
-            var filter_dd_build = document.getElementById("filter_date_dd");
-
-            var verb = getRestURL("testruns_get_all_dates");
-            getDataFromServer(verb);
-
-            for (var i = 0; i < rest_results.length; i++) {
-                var option = document.createElement("option");
-                option.value = rest_results[i].build_number;
-                option.text = rest_results[i].build_number +  " (" +  rest_results[i].run_time + ")";
-                filter_dd_build.appendChild(option);
-            }
-        }
-
-        /////////////////////////////////////////////////////////////////
-        //
-        // Initialize the list of filters based on the selected build
-        // number. This includes Scenario, Metric and Target
-        //
-        function init_filter_list(filter_dd, restId, value){
-
-
-            // Get selected build number
-            var filter_dd_build = document.getElementById("filter_date_dd");
-            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value
-
-            var verb = getRestURL(restId);
-            verb = verb.replace("<<BUILD_NUMBER>>", build_number);
-            getDataFromServer(verb);
-
-            filter_dd.innerHTML = "";
-
-            if(rest_results.length > 0){
-                var option = document.createElement("option");
-                option.value = "ANY";
-                option.text = "ANY";
-                filter_dd.appendChild(option);
-            }
-
-            //Create and append the options
-            for (var i = 0; i < rest_results.length; i++) {
-                var option = document.createElement("option");
-                option.value = rest_results[i][value] + i;
-                option.text = rest_results[i][value];
-                filter_dd.appendChild(option);
-            }
-        }
-
-
-
-        /////////////////////////////////////////////////////////////////
-        //
-        // Generate the grpah based on the filters
-        //
-        //
-        function generateAllGraphs(){
-            // Get selected build number
-            var filter_dd_build = document.getElementById("filter_date_dd");
-            var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value;
-
-
-            // Get the selected dropdowns
-            var dd_scenario = document.getElementById("filter_scenario_dd");
-            var dd_metric = document.getElementById("filter_metric_dd");
-
-            var scenarios = dd_scenario.options;
-            var metrics = dd_metric.options;
-
-            var sel_scenario = .options[ddscenario.selectedIndex].innerText;
-            var sel_metric = document.getElementById("filter_scenario_dd").options[ddscenario.selectedIndex].innerText;
-
-
-            qtyMetrics = metrics.length - 1;
-            qtyScenarios = scenarios.length - 1;
-
-            scenarioA = 'gripper';
-
-            var graphPerLine=2;
-            var idxGraph = 0, availableGraph = 0;
-            var table = document.getElementById("tableGraph");
-            table.innerText = "";
-
-            //Create the graph containers
-            while(availableGraph <  (qtyScenarios * qtyMetrics)){
-                // Find a <table> element with id="myTable":
-                var row = table.insertRow(Math.floor(availableGraph/graphPerLine));
-                row.className = "tableGraph";
-                row.id = "rowNbr" + Math.floor(availableGraph/graphPerLine);
-
-                for(var i = 0; i < graphPerLine; i++) {
-                    // Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
-                    var cell = row.insertCell(i);
-                    cell.id = "cell" + availableGraph++;
-                    cell.style = "text-align: center";
-                    // Create the cell graph div to be added to the cell
-                    newDiv = document.createElement("div");
-                    newDiv.id = "genGraph" + availableGraph;
-                    newDiv.style = "border: 1px; solid #ccc";
-                    // Link to download the data
-                    newLink = document.createElement("a");
-                    newLink.id = "dwDataLink" + availableGraph;
-                    // newLink.href = "javascript:generateTheDownloadLink('" + build_number + "','" + scenarioName + "');";
-                    newLink.style = "position: center";
-                    newLink.innerText = "Download data";
-                    newLink.style = "font-size: small";
-
-                    cell.appendChild(newDiv);
-                    cell.appendChild(newLink);
-                }
-            }
-            // Draw the graph
-            var idxGraph = 1;
-            for (var it = 0; it < scenarios.length; it ++){
-                var scenarioName = scenarios[it].outerText;
-                if (scenarioName != "ANY"){
-
-                    var verb = getRestURL("metric_by_build_number_scenario");
-                    verb = verb.replace("<<BUILD_NUMBER>>", build_number);
-                    verb = verb.replace("<<SCENARIO>>", scenarioName);
-                    getDataFromServer(verb);
-
-
-
-                    for(var key in rest_results){
-                        // console.log(key);
-
-                        google.charts.load('current', {'packages':['corechart']});
-                        var data = google.visualization.arrayToDataTable(rest_results[key]);
-
-                        var options = {
-                            title: "Build " + build_number + " - Scenario: " + scenarioName + " - Metric: " + key,
-                            curveType: 'function',
-                            legend: { position: 'bottom' },
-                            width:600,
-                            height:400,
-                            chartArea: {'width': '80%', 'height': '86%'},
-                        };
-
-                        var dwDatalink = document.getElementById("dwDataLink" + idxGraph);
-                        dwDatalink.href = "javascript:generateTheDownloadLink('" + build_number +"', " +
-                            "'" +  scenarioName + "', '" + key + "');";
-
-                        var chart = new google.visualization.LineChart(document.getElementById('genGraph' + idxGraph));
-                        chart.draw(data, options);
-                        idxGraph++;
-                    }
-
-                }
-            }
-        }
-
-
-        /***
-         *  this function process the link to download the data associated with graphs
-         *
-         *
-         * */
-        function generateTheDownloadLink(build_number, scenario, metric){
-            var verb = getRestURL("metric_by_build_number_scenario");
-            verb = verb.replace("<<BUILD_NUMBER>>", build_number);
-            verb = verb.replace("<<SCENARIO>>", scenario);
-            verb += "&metric=" + metric;
-            getDataFromServer(verb);
-
-            var x = rest_results;
-
-            var ret_text = "";
-            for(key in rest_results) {
-                var ret_table = rest_results[key];
-                for (var row = 0; row < ret_table.length; row++) {
-                    var ret_row = ret_table[row];
-                    for (var col = 0; col < ret_row.length; col++) {
-                        ret_text += ret_row[col] + ", ";
-                    }
-                    ret_text = ret_text.substring(0, ret_text.lastIndexOf(', ')) + "\r\n" + ret_text.substring(ret_text.lastIndexOf(',') + 1);
-                }
-            }
-
-            var mysce = scenario.replace("[|]", "_")
-            download("Export_" + build_number + "_" + mysce + "_" + metric + ".csv", ret_text);
-        }
-
-
-
-        function download(filename, text) {
-            var element = document.createElement('a');
-            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-            element.setAttribute('download', filename);
-
-            element.style.display = 'none';
-            document.body.appendChild(element);
-
-            element.click();
-
-            document.body.removeChild(element);
-        }
-
-
-        function sleep(delay) {
-            var start = new Date().getTime();
-            while (new Date().getTime() < start + delay);
-        }
-
-        /***
-         *
-         *  Obtain data and fill a table with that data
-         *
-         * */
-        function getData(anchor, type){
-            var verb = getRestURL(type);
-            buildHtmlTable(anchor, verb);
-
-
-        }
-        /***
-         *
-         *  Create the needed URL to call a REST web service
-         *
-         * */
-        function getRestURL(type){
-            var verb = "http://127.0.0.1:5280";
-            switch(type){
-                case "rest_results":
-                    verb += "/rest_results/get";
-
-                    verb += createRestParamList(["start_date", "end_date", "build_number", "status", "trigger"]);
-                    break;
-                case "products":
-                    verb += "/products/get";
-                    if (prodname = document.getElementById("prodname")){
-                        if(ret = prodname.value){
-                            verb += "?name=" + ret;
-                            if(prodversion = document.getElementById("prodversion")){
-                                if(ret = prodversion.value) {
-                                    verb += "&version=" + ret;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                case "metrics":
-                    verb += "/metrics/get";
-                    if (metricname = document.getElementById("metricname")){
-                        if(ret = metricname.value){
-                            verb += "?name=" + ret;
-                            if(metrictarget = document.getElementById("metrictarget")){
-                                if(ret = metrictarget.value) {
-                                    verb += "&target=" + ret;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                case "metrics_raw":
-
-                    verb += "/metrics/get/by_build_number";
-                    verb +=  "?" + "build_number=" + document.getElementById("metBuildNumber").value;
-                    verb +=  "&" + "target=" + document.getElementById("metBuildTarget").value;
-                    verb +=  "&" + "scenario=" + document.getElementById("metScenario").value;
-                    verb +=  "&" + "metric=" + document.getElementById("metMetric").value;
-
-                    break;
-                case "testruns_get_all_dates":
-                    verb += "/testruns/getAllDates";
-                    verb += "?" + "sort=" + "ASC"; // ["DESC" | "ASC"]
-                    break;
-                case "metrics_by_build_number":
-                    verb += "/metrics/get/metric_by_build_number";
-                    verb += "?" + "build_number=<<BUILD_NUMBER>>";
-                    break;
-                case "target_by_build_number":
-                    verb += "/metrics/get/target_by_build_number";
-                    verb += "?" + "build_number=<<BUILD_NUMBER>>";
-                    break;
-                case "scenario_by_build_number":
-                    verb += "/testruns/scenario_by_build_number";
-                    verb += "?" + "build_number=<<BUILD_NUMBER>>";
-                    break;
-                case "metric_by_build_number_scenario":
-                    verb += "/metrics/get/data_graph";
-                    verb += "?" + "build_number=<<BUILD_NUMBER>>&scenario=<<SCENARIO>>";
-                    break;
-                default:
-                    verb += "/rest_results/get";
-            }
-            return verb;
-        }
-
-        function createRestParamList(listOfID){
-            var paramList = "";
-            var bFirst = true;
-            for (var i = 0; i < listOfID.length; i++) {
-                if(idElem = document.getElementById(listOfID[i])){
-                    if(val =  idElem.value){
-                        if(val != 'ANY'){
-                            paramList += bFirst?"?":"&";
-                            bFirst = false;
-                            paramList += listOfID[i] + "=" + val;
-                        }
-                    }
-                }
-            }
-            return paramList;
-        }
-
-        /***
-         *
-         *  Create a table with the passed data tuple
-         *
-         * */
-        function buildHtmlTable(selector, verb) {
-            //var rest_results = getData_rest_results();
-            getDataFromServer(verb);
-
-            if(!rest_results) return;
-
-            $(selector).empty();
-
-            var columns = addAllColumnHeaders(rest_results, selector);
-
-            for (var i = 0; i < rest_results.length; i++) {
-                var row$ = $('<tr/>');
-                for (var colIndex = 0; colIndex < columns.length; colIndex++) {
-                    var cellValue = rest_results[i][columns[colIndex]];
-                    if (cellValue == null) cellValue = "";
-                    row$.append($('<td/>').html(cellValue));
-                }
-                $(selector).append(row$);
-            }
-        }
-
-        // Adds a header row to the table and returns the set of columns.
-        // Need to do union of keys from all records as some records may not contain
-        // all records.
-        function addAllColumnHeaders(myList, selector) {
-            var columnSet = [];
-            var headerTr$ = $('<tr/>');
-
-            for (var i = 0; i < myList.length; i++) {
-                var rowHash = myList[i];
-                for (var key in rowHash) {
-                    if ($.inArray(key, columnSet) == -1) {
-                        columnSet.push(key);
-                        headerTr$.append($('<th/>').html(key));
-                    }
-                }
-            }
-            $(selector).append(headerTr$);
-            return columnSet;
-        }
-
-    </SCRIPT>
 </HTML>
+<SCRIPT>
+    google.load('visualization', '1.0', {'packages':['corechart']});
+
+    var rest_request = new XMLHttpRequest()
+    var rest_results = null;
+
+    function init()
+    {
+        init_build_number_list();
+        updateMetricAndTarget();
+    }
+
+    /////////////////////////////////////////////////////////////////
+    //
+    // Update the scenario, metric and taget based on the selected
+    // build number
+    //
+    function updateMetricAndTarget(){
+        init_filter_list(document.getElementById("filter_scenario_dd"), "scenario_by_build_number", "scenario");
+        init_filter_list(document.getElementById("filter_metric_dd"), "metrics_by_build_number", "metric_name");
+        init_filter_list(document.getElementById("filter_target_dd"), "target_by_build_number", "target");
+        generateAllGraphs();
+    }
+
+
+    function getDataFromServer(serverVerb){
+        // Open a new connection, using the GET request on the URL endpoint
+        rest_request.open('GET', serverVerb, false);
+
+        // Send request
+        rest_request.send();
+    }
+
+
+    // Nested function to process received results
+    rest_request.onload = function () {
+        var response = rest_request.responseText;
+        //console.log("ok"+ response);
+        var result = JSON.parse(response);
+        rest_results = result.return;
+    }
+
+
+
+    /////////////////////////////////////////////////////////////////
+    //
+    // Initialize the list of Build number (and date) from the
+    // database.
+    //
+    function init_build_number_list(){
+        var filter_dd_build = document.getElementById("filter_date_dd");
+
+        var verb = getRestURL("testruns_get_all_dates");
+        getDataFromServer(verb);
+
+        for (var i = 0; i < rest_results.length; i++) {
+            var option = document.createElement("option");
+            option.value = rest_results[i].build_number;
+            option.text = rest_results[i].build_number +  " (" +  rest_results[i].run_time + ")";
+            filter_dd_build.appendChild(option);
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////
+    //
+    // Initialize the list of filters based on the selected build
+    // number. This includes Scenario, Metric and Target
+    //
+    function init_filter_list(filter_dd, restId, value){
+
+
+        // Get selected build number
+        var filter_dd_build = document.getElementById("filter_date_dd");
+        var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value
+
+        var verb = getRestURL(restId);
+        verb = verb.replace("<<BUILD_NUMBER>>", build_number);
+        getDataFromServer(verb);
+
+        filter_dd.innerHTML = "";
+
+        if(rest_results.length > 0){
+            var option = document.createElement("option");
+            option.value = "ANY";
+            option.text = "ANY";
+            filter_dd.appendChild(option);
+        }
+
+        //Create and append the options
+        for (var i = 0; i < rest_results.length; i++) {
+            var option = document.createElement("option");
+            option.value = rest_results[i][value] + i;
+            option.text = rest_results[i][value];
+            filter_dd.appendChild(option);
+        }
+    }
+
+
+
+    /////////////////////////////////////////////////////////////////
+    //
+    // Generate the grpah based on the filters
+    //
+    //
+    function generateAllGraphs(){
+        var graphPerLine=2;
+        var idxGraph = 0;
+        var qtyScenarios = 0, qtyMetrics = 0;
+
+        // Get selected build number
+        var filter_dd_build = document.getElementById("filter_date_dd");
+        var build_number = filter_dd_build.options[filter_dd_build.selectedIndex].value;
+
+
+        // Get the selected dropdowns
+        var dd_scenario = document.getElementById("filter_scenario_dd");
+        var dd_metric = document.getElementById("filter_metric_dd");
+        var dd_target = document.getElementById("filter_target_dd");
+
+
+        var scenarios = dd_scenario.options;
+        var metrics = dd_metric.options;
+
+        var sel_scenario = dd_scenario.options[dd_scenario.selectedIndex].innerText;
+        var sel_metric = dd_metric.options[dd_metric.selectedIndex].innerText;
+        var sel_target = dd_target.options[dd_target.selectedIndex].innerText;
+
+        if (dd_scenario.selectedIndex === 0) qtyScenarios = scenarios.length - 1;
+        else {
+            qtyScenarios = 1;
+            scenarios = [];
+            scenarios.push(dd_scenario.options[dd_scenario.selectedIndex]);
+        }
+
+        if (dd_metric.selectedIndex === 0) qtyMetrics = metrics.length - 1;
+        else {
+            qtyMetrics = 1;
+            metrics = [];
+            metrics.push(dd_metric.options[dd_metric.selectedIndex]);
+        }
+
+        // Required place holder for the graph to be displayed
+        var totalNbrOfGraphs = qtyScenarios * qtyMetrics;
+        createGraphPlaceHolders(totalNbrOfGraphs, graphPerLine);
+
+        // Draw the graph
+        var idxGraph = 0;
+        for (var it = 0; idxGraph < totalNbrOfGraphs; it++){
+            var scenarioName = scenarios[it].text;
+            if (scenarios[it].index !== 0){
+
+                var verb = getRestURL("metric_by_build_number_scenario");
+                verb = verb.replace("<<BUILD_NUMBER>>", build_number);
+                verb = verb.replace("<<SCENARIO>>", scenarioName);
+                if(dd_metric.selectedIndex !== 0){
+                    verb += "&metric=" + sel_metric;
+                }
+                if(dd_target.selectedIndex !== 0){
+                    verb += "&target=" + sel_target;
+
+                }
+
+                getDataFromServer(verb);
+
+                for(var key in rest_results){
+                    if(key == "hdd_space"){
+                        var pieTable = convertHddDataForPieChart(rest_results[key]);
+                        drawPieChart(key, pieTable, idxGraph, build_number, scenarioName);
+                    }
+                    else{
+                        drawScalarGraph(key, rest_results[key], idxGraph, build_number, scenarioName);
+                    }
+
+                    idxGraph++;
+                }
+
+            }
+        }
+    }
+
+
+    function convertHddDataForPieChart(table){
+        ret_table = [];
+        var total_robotiq = 0;
+
+        // Add title
+        ret_table.push(["Component", "Space usage"]);
+
+        // Add available
+        var available = table[1][table[0].indexOf("available")];
+        ret_table.push(["Available", available]);
+
+        for(var i = 0; i < table[0].length; i++){
+            if(table[0][i] !== "Index" && table[0][i] !== "available" && table[0][i] !== "total" && table[0][i] !== "used"){
+                ret_table.push([table[0][i], table[1][i]]);
+                total_robotiq += table[1][i];
+            }
+        }
+        ret_table.push(["other", table[1][table[0].indexOf("used")] - total_robotiq]);
+        return ret_table;
+    }
+
+    function drawScalarGraph(key, table ,idxGraph, build_number, scenarioName){
+        google.charts.load('current', {'packages':['corechart']});
+        var data = google.visualization.arrayToDataTable(table);
+
+        var options = {
+            title: "Build " + build_number + " - Scenario: " + scenarioName + " - Metric: " + key,
+            curveType: 'function',
+            legend: { position: 'bottom', maxLines: 2},
+            width:600,
+            height:400,
+            chartArea: {left:'8%', top: '8%', 'width': '85%', 'height': '85%'},
+            is3D: true,
+        };
+
+        var dwDatalink = document.getElementById("dwDataLink" + idxGraph);
+        dwDatalink.innerText = "Download data";
+        dwDatalink.href = "javascript:generateTheDownloadLink('" + build_number + "', " +
+            "'" +  scenarioName + "', '" + key + "');";
+
+        var chart = new google.visualization.LineChart(document.getElementById('genGraph' + idxGraph));
+        chart.draw(data, options);
+
+    }
+
+
+    function drawPieChart(key, table, idxGraph, build_number, scenarioName){
+        var data = google.visualization.arrayToDataTable(table);
+
+        var options = {
+            title: "Build " + build_number + " - Scenario: " + scenarioName + " - Metric: " + key,
+            curveType: 'function',
+            legend: { position: 'bottom', maxLines: 2},
+            width:600,
+            height:400,
+            chartArea: {'width': '80%', 'height': '86%'},
+            is3D: true,
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('genGraph' + idxGraph));
+
+        chart.draw(data, options);
+    }
+
+
+    function createGraphPlaceHolders(quantity, graphPerLine){
+        var availableGraph = 0;
+
+        var table = document.getElementById("tableGraph");
+
+        // Reset the graph table use for the display
+        table.innerText = "";
+
+        //Create the graph containers
+        while(availableGraph <  quantity){
+            // Find a <table> element with id="myTable":
+            var row = table.insertRow(Math.floor(availableGraph/graphPerLine));
+            row.className = "tableGraph";
+            row.id = "rowNbr" + Math.floor(availableGraph/graphPerLine);
+
+            for(var i = 0; i < graphPerLine; i++) {
+                // Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
+                var cell = row.insertCell(i);
+                cell.id = "cell" + availableGraph;
+                cell.style = "text-align: center";
+                // Create the cell graph div to be added to the cell
+                newDiv = document.createElement("div");
+                newDiv.id = "genGraph" + availableGraph;
+                newDiv.style = "border: 1px; solid #ccc";
+                // Link to download the data
+                newLink = document.createElement("a");
+                newLink.id = "dwDataLink" + availableGraph;
+                newLink.style = "position: center";
+                newLink.style = "font-size: small";
+
+                cell.appendChild(newDiv);
+                cell.appendChild(newLink);
+                availableGraph++;
+            }
+        }
+    }
+
+    /***
+     *  this function process the link to download the data associated with graphs
+     *
+     *
+     * */
+    function generateTheDownloadLink(build_number, scenario, metric){
+        var verb = getRestURL("metric_by_build_number_scenario");
+        verb = verb.replace("<<BUILD_NUMBER>>", build_number);
+        verb = verb.replace("<<SCENARIO>>", scenario);
+        verb += "&metric=" + metric;
+        getDataFromServer(verb);
+
+        var x = rest_results;
+
+        var ret_text = "";
+        for(key in rest_results) {
+            var ret_table = rest_results[key];
+            for (var row = 0; row < ret_table.length; row++) {
+                var ret_row = ret_table[row];
+                for (var col = 0; col < ret_row.length; col++) {
+                    ret_text += ret_row[col] + ", ";
+                }
+                ret_text = ret_text.substring(0, ret_text.lastIndexOf(', ')) + "\r\n" + ret_text.substring(ret_text.lastIndexOf(',') + 1);
+            }
+        }
+
+        var mysce = scenario.replace("[|]", "_")
+        download("Export_" + build_number + "_" + mysce + "_" + metric + ".csv", ret_text);
+    }
+
+
+
+    function download(filename, text) {
+        var element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        element.setAttribute('download', filename);
+
+        element.style.display = 'none';
+        document.body.appendChild(element);
+
+        element.click();
+
+        document.body.removeChild(element);
+    }
+
+
+    function sleep(delay) {
+        var start = new Date().getTime();
+        while (new Date().getTime() < start + delay);
+    }
+
+    /***
+     *
+     *  Obtain data and fill a table with that data
+     *
+     * */
+    function getData(anchor, type){
+        var verb = getRestURL(type);
+        buildHtmlTable(anchor, verb);
+
+
+    }
+    /***
+     *
+     *  Create the needed URL to call a REST web service
+     *
+     * */
+    function getRestURL(type){
+        var verb = "http://127.0.0.1:5280";
+        switch(type){
+            case "rest_results":
+                verb += "/rest_results/get";
+
+                verb += createRestParamList(["start_date", "end_date", "build_number", "status", "trigger"]);
+                break;
+            case "products":
+                verb += "/products/get";
+                if (prodname = document.getElementById("prodname")){
+                    if(ret = prodname.value){
+                        verb += "?name=" + ret;
+                        if(prodversion = document.getElementById("prodversion")){
+                            if(ret = prodversion.value) {
+                                verb += "&version=" + ret;
+                            }
+                        }
+                    }
+                }
+                break;
+            case "metrics":
+                verb += "/metrics/get";
+                if (metricname = document.getElementById("metricname")){
+                    if(ret = metricname.value){
+                        verb += "?name=" + ret;
+                        if(metrictarget = document.getElementById("metrictarget")){
+                            if(ret = metrictarget.value) {
+                                verb += "&target=" + ret;
+                            }
+                        }
+                    }
+                }
+                break;
+            case "metrics_raw":
+
+                verb += "/metrics/get/by_build_number";
+                verb +=  "?" + "build_number=" + document.getElementById("metBuildNumber").value;
+                verb +=  "&" + "target=" + document.getElementById("metBuildTarget").value;
+                verb +=  "&" + "scenario=" + document.getElementById("metScenario").value;
+                verb +=  "&" + "metric=" + document.getElementById("metMetric").value;
+
+                break;
+            case "testruns_get_all_dates":
+                verb += "/testruns/getAllDates";
+                verb += "?" + "sort=" + "ASC"; // ["DESC" | "ASC"]
+                break;
+            case "metrics_by_build_number":
+                verb += "/metrics/get/metric_by_build_number";
+                verb += "?" + "build_number=<<BUILD_NUMBER>>";
+                break;
+            case "target_by_build_number":
+                verb += "/metrics/get/target_by_build_number";
+                verb += "?" + "build_number=<<BUILD_NUMBER>>";
+                break;
+            case "scenario_by_build_number":
+                verb += "/testruns/scenario_by_build_number";
+                verb += "?" + "build_number=<<BUILD_NUMBER>>";
+                break;
+            case "metric_by_build_number_scenario":
+                verb += "/metrics/get/data_graph";
+                verb += "?" + "build_number=<<BUILD_NUMBER>>&scenario=<<SCENARIO>>";
+                break;
+            default:
+                verb += "/rest_results/get";
+        }
+        return verb;
+    }
+
+    function createRestParamList(listOfID){
+        var paramList = "";
+        var bFirst = true;
+        for (var i = 0; i < listOfID.length; i++) {
+            if(idElem = document.getElementById(listOfID[i])){
+                if(val =  idElem.value){
+                    if(val != 'ANY'){
+                        paramList += bFirst?"?":"&";
+                        bFirst = false;
+                        paramList += listOfID[i] + "=" + val;
+                    }
+                }
+            }
+        }
+        return paramList;
+    }
+
+    /***
+     *
+     *  Create a table with the passed data tuple
+     *
+     * */
+    function buildHtmlTable(selector, verb) {
+        //var rest_results = getData_rest_results();
+        getDataFromServer(verb);
+
+        if(!rest_results) return;
+
+        $(selector).empty();
+
+        var columns = addAllColumnHeaders(rest_results, selector);
+
+        for (var i = 0; i < rest_results.length; i++) {
+            var row$ = $('<tr/>');
+            for (var colIndex = 0; colIndex < columns.length; colIndex++) {
+                var cellValue = rest_results[i][columns[colIndex]];
+                if (cellValue == null) cellValue = "";
+                row$.append($('<td/>').html(cellValue));
+            }
+            $(selector).append(row$);
+        }
+    }
+
+    // Adds a header row to the table and returns the set of columns.
+    // Need to do union of keys from all records as some records may not contain
+    // all records.
+    function addAllColumnHeaders(myList, selector) {
+        var columnSet = [];
+        var headerTr$ = $('<tr/>');
+
+        for (var i = 0; i < myList.length; i++) {
+            var rowHash = myList[i];
+            for (var key in rowHash) {
+                if ($.inArray(key, columnSet) == -1) {
+                    columnSet.push(key);
+                    headerTr$.append($('<th/>').html(key));
+                }
+            }
+        }
+        $(selector).append(headerTr$);
+        return columnSet;
+    }
+
+</SCRIPT>
 
 

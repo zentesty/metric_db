@@ -32,6 +32,7 @@ class Metric:
         if recordId is None: raise Exception(f"RQTA_DB: Unable to create the {self.__class__.name} entity in the schema")
         self.__internal_id = recordId[0]
 
+        if not self.dimensions: return self.__internal_id
 
         for dim in self.dimensions:
             scDimensions = f"SELECT id_dimension FROM dimension WHERE name='{str(dim)}' AND value='{str(self.dimensions[dim])}';"

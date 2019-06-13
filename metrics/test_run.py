@@ -54,7 +54,7 @@ class TestRun:
     def status(self, value):
         self._status = value
 
-    def add_metric(self, name, description, value, qualifier, dimensions, target, index=1):
+    def add_metric(self, name, description, value, qualifier, target, index=1, dimensions=None):
         newMetric = Metric(name=name, description=description, value=value,
                            qualifier=qualifier, dimensions=dimensions, target=target, index=index)
         self.metrics.append(newMetric)
