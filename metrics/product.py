@@ -12,6 +12,7 @@ class Product:
         self.__internal_id = -1
 
 
+    """ Test for the demo of tomorrow """
     def commit(self, cursor):
         scProd = f"SELECT id_product FROM product p WHERE p.name='{str(self.name)}' AND p.version='{str(self.version)}';"
         cursor.execute(scProd)
